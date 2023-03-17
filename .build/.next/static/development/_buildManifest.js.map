@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../../../.next/static/development/_buildManifest.js"],
+  "sourcesContent": ["self.__BUILD_MANIFEST = {__rewrites:{beforeFiles:[],afterFiles:[],fallback:[]},\"/\":[\"static\\u002Fchunks\\u002Fpages\\u002Findex.js\"],\"/_error\":[\"static\\u002Fchunks\\u002Fpages\\u002F_error.js\"],sortedPages:[\"\\u002F\",\"\\u002F_app\",\"\\u002F_error\"]};self.__BUILD_MANIFEST_CB && self.__BUILD_MANIFEST_CB()"],
+  "mappings": ";AAAA,KAAK,mBAAmB,EAAC,YAAW,EAAC,aAAY,CAAC,GAAE,YAAW,CAAC,GAAE,UAAS,CAAC,EAAC,GAAE,KAAI,CAAC,8BAA6C,GAAE,WAAU,CAAC,+BAA8C,GAAE,aAAY,CAAC,KAAS,SAAa,SAAc,EAAC;AAAE,KAAK,uBAAuB,KAAK,oBAAoB;",
+  "names": []
+}
