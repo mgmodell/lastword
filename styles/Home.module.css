@@ -3,8 +3,22 @@
 .board {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
+  width: auto;
 }
 
+.board > div {
+  width: 40px;
+  height: 40px;
+  background-color: #7700EE;
+  text-align: center;
+  border-color: #000000;
+  border-width: thin;
+  
+}
+.board > div.inactive {
+  border-color: #50ce6f;
+  
+}
 .board > div.horizontal {
   background-color: #8888F8;
   
@@ -14,8 +28,9 @@
   
 }
 .board > div.current {
-  background-color: #8888F8;
-  animation: pulse 5s infinite;
+  border-block-color: #671209;
+  animation: pulse 1s infinite;
+  background-color: #48e21d;
   
 }
 .board > div.mine {
@@ -32,7 +47,7 @@
 		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
 	}
 
-	70% {
+	50% {
 		transform: scale(1);
 		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
 	}
