@@ -52,6 +52,7 @@ export default function BoardBuilder(props){
   const initBoard = () => {
     setPlacedWords( [] );
     setUsedCells( [] );
+    setGrid({})
     const tmp_grid:Board = {};
     for( let x_pos = 0; x_pos < x; x_pos ++  ){
       tmp_grid[x_pos] = {};
@@ -81,13 +82,19 @@ export default function BoardBuilder(props){
   }
 
   useEffect( ()=>{
+    if( baseWords.length > 0 && placedWords.length < 1 ){
+      placeWords( );
+    }
+    
+  },[placedWords])
+
+  useEffect( ()=>{
     initBoard( );
     fetchWords( );
     
   },[])
 
   const placeWords = ()=>{
-    initBoard( );
     const count = 10 + (Math.random() * 20);
     const tmpWords:Array<PlacedWord> = [];
     
@@ -95,19 +102,17 @@ export default function BoardBuilder(props){
     for( let index = 0; index < count; index++ ){
       const place = Math.round( baseWords.length * Math.random() );
       const proposedWord = baseWords[ place ];
+      const placedWord:PlacedWord = {
+        word: proposedWord,
+        place: place
+      };
 
-      let placedWord:PlacedWord = {};
       if( tmpUsedCells.length < 1 ){
         const orientation = Math.round( Math.random() * 2 );
         const hiLow = Math.round( Math.random() * 2 );
         const position = Math.round( Math.random() * GRID_SIZE );
-        placedWord = {
-          orientation: orientation,
-          word: proposedWord,
-          place: place
-        }
+        placedWord.orientation = orientation;
         let offset = 0;
-        console.log( placedWord );
         if( hiLow === 2 ){
           offset = GRID_SIZE - placedWord.word.length;
         }
@@ -118,8 +123,26 @@ export default function BoardBuilder(props){
           placedWord.y = offset;
           placedWord.x = position;
         }
-        
       } else {
+        const anchorCell = tmpUsedCells.find( (cell) => {
+          return proposedWord.search( cell.letter )
+        })
+        if( anchorCell !== -1 ){
+          if( anchorCell?.yPos > 0 && anchorCell?.yPos < 17 &&
+              grid[anchorCell.xPos][anchorCell.yPos - 1].letter === '' &&
+              grid[anchorCell.xPos][anchorCell.yPos + 1].letter === '' ){
+                placedWord.orientation = Orientation.VERTICAL;
+                placedWord.xPos = anchorCell.xPos;
+                placedWord.yPos = anchorCell.yPos - proposedWord.search( anchorCell?.letter );
+          } else if( anchorCell?.xPos > 0 && anchorCell?.yPos < 17 &&
+              grid[anchorCell.xPos - 1][anchorCell.yPos].letter === '' &&
+              grid[anchorCell.xPos + 1][anchorCell.yPos].letter === '' ){
+                placedWord.orientation = Orientation.HORIZONTAL;
+                placedWord.xPos = anchorCell.xPos - proposedWord.search( anchorCell?.letter );
+                placedWord.yPos = anchorCell.yPos;
+          }
+
+        }
         
       }
       if( isValidPlacement( placedWord ) ){
@@ -127,6 +150,7 @@ export default function BoardBuilder(props){
         setPlacement( placedWord, tmpUsedCells );
       }
     }
+    setUsedCells( tmpUsedCells );
     setPlacedWords( tmpWords );
     
   }
@@ -134,31 +158,42 @@ export default function BoardBuilder(props){
         const tmpGrid:Board = Object.assign( {}, grid );
         let curX = placedWord.x;
         let curY = placedWord.y;
-        let tmpCell = tmpGrid[curX][curY];
-        cell.letter = placedWord.word.charAt( 0 );
-        cell.mine = false;
-        usedCellsStore.push( tmpCell );
-        
-        for( let curChar = 1; curChar < placedWord.word.length; curChar++ ){
-          if( Orientation.HORIZONTAL === placedWord.orientation ){
-            curX = placedWord.x;
-            curY = placedWord.y + curChar;
-          } else {
-            curX = placedWord.x + curChar;
-            curY = placedWord.y;
-            
-          }
-          cell = tmpGrid[curX][curY];
-          cell.letter = placedWord.word.charAt( curChar );
-          cell.mine = false;
+        if( curX >= 0 && curX < 17 && curY >= 0 && curY < 17 ){
+          let tmpCell = tmpGrid[curX][curY];
+          tmpCell.letter = placedWord.word.charAt( 0 );
+          tmpCell.mine = false;
           usedCellsStore.push( tmpCell );
         }
+        for( let curChar = 1; curChar < placedWord.word.length; curChar++ ){
+        
+            if( Orientation.HORIZONTAL === placedWord.orientation ){
+              curX = placedWord.x;
+              curY = placedWord.y + curChar;
+            } else {
+              curX = placedWord.x + curChar;
+              curY = placedWord.y;
+
+            }
+          if( curX >= 0 && curX < 17 && curY >= 0 && curY < 17 ){
+            let tmpCell = tmpGrid[curX][curY];
+            tmpCell.letter = placedWord.word.charAt( curChar );
+            tmpCell.mine = false;
+            usedCellsStore.push( tmpCell );
+
+          }
+        }
         setGrid( tmpGrid );
-        setUsedCells( tmpUsedCells );
+        setUsedCells( usedCellsStore );
     
   }
   const isValidPlacement = ( placedWord:PlacedWord ) =>{
-    return true;
+    let valid = false;
+    if( (placedWord.orientation === Orientation.HORIZONTAL ||
+          placedWord.orientation === Orientation.VERTICAL ) &&
+          placedWord.word !== '' & placedWord.word.length > 1 ){
+      valid = true;
+    }
+    return valid;
     
   }
   const selectCell = (event) => {
@@ -166,7 +201,6 @@ export default function BoardBuilder(props){
     const yPos = parseInt( event.target.attributes.ypos.value );
     const tmp_grid = Object.assign( {}, grid );
     
-    console.log( curCell );
     if( curCell != undefined ){
       const prevCell = Object.assign({}, curCell);
       prevCell.focused = false;
@@ -187,6 +221,7 @@ export default function BoardBuilder(props){
   const board = useMemo( () =>{
     const x = 16;
     const y = 16;
+    console.log( 'render', placedWords.length, usedCells.length);
     
     if( Object.keys(grid).length < x ){
       return null;
@@ -214,11 +249,11 @@ export default function BoardBuilder(props){
       
     }
     
-  }, [grid] );
+  }, [grid, placedWords, usedCells] );
 
   return(
     <Fragment>
-      <button onClick={placeWords} >New Board</button>
+      <button onClick={initBoard} >New Board</button>
       {board}
     </Fragment>
   )
