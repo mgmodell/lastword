@@ -3,7 +3,7 @@
 .board {
   display: grid;
   grid-template-columns: repeat(16, 1fr);
-  width: auto;
+  width: 50%;
 }
 
 .board > div {
