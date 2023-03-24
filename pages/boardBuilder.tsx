@@ -125,21 +125,26 @@ export default function BoardBuilder(props){
         }
       } else {
         const anchorCell = tmpUsedCells.find( (cell) => {
-          return proposedWord.search( cell.letter )
+          const result = proposedWord.search( cell.letter );
+          return result !== -1;
         })
-        if( anchorCell !== -1 ){
+        if( anchorCell !== undefined ){
           if( anchorCell?.yPos > 0 && anchorCell?.yPos < 17 &&
+              grid[anchorCell.xPos][anchorCell.yPos - 1] !== undefined &&
+              grid[anchorCell.xPos][anchorCell.yPos + 1] !== undefined &&
               grid[anchorCell.xPos][anchorCell.yPos - 1].letter === '' &&
               grid[anchorCell.xPos][anchorCell.yPos + 1].letter === '' ){
-                placedWord.orientation = Orientation.VERTICAL;
-                placedWord.xPos = anchorCell.xPos;
-                placedWord.yPos = anchorCell.yPos - proposedWord.search( anchorCell?.letter );
+                placedWord.orientation = Orientation.HORIZONTAL;
+                placedWord.x = anchorCell.xPos;
+                placedWord.y = anchorCell.yPos - proposedWord.search( anchorCell?.letter );
           } else if( anchorCell?.xPos > 0 && anchorCell?.yPos < 17 &&
+              grid[anchorCell.xPos - 1] !== undefined &&
+              grid[anchorCell.xPos + 1] !== undefined &&
               grid[anchorCell.xPos - 1][anchorCell.yPos].letter === '' &&
               grid[anchorCell.xPos + 1][anchorCell.yPos].letter === '' ){
-                placedWord.orientation = Orientation.HORIZONTAL;
-                placedWord.xPos = anchorCell.xPos - proposedWord.search( anchorCell?.letter );
-                placedWord.yPos = anchorCell.yPos;
+                placedWord.orientation = Orientation.VERTICAL;
+                placedWord.x = anchorCell.xPos - proposedWord.search( anchorCell?.letter );
+                placedWord.y = anchorCell.yPos;
           }
 
         }
@@ -174,7 +179,7 @@ export default function BoardBuilder(props){
               curY = placedWord.y;
 
             }
-          if( curX >= 0 && curX < 17 && curY >= 0 && curY < 17 ){
+          if( curX >= 0 && curX < 16 && curY >= 0 && curY < 16 ){
             let tmpCell = tmpGrid[curX][curY];
             tmpCell.letter = placedWord.word.charAt( curChar );
             tmpCell.mine = false;
@@ -221,7 +226,6 @@ export default function BoardBuilder(props){
   const board = useMemo( () =>{
     const x = 16;
     const y = 16;
-    console.log( 'render', placedWords.length, usedCells.length);
     
     if( Object.keys(grid).length < x ){
       return null;
