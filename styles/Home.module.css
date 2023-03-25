@@ -7,8 +7,9 @@
 }
 
 .board > div {
-  width: 40px;
-  height: 40px;
+  border-radius: 15px;
+  width: 20px;
+  height: 20px;
   background-color: #7700EE;
   text-align: center;
   border-color: #000000;
@@ -28,9 +29,10 @@
   
 }
 .board > div.current {
-  border-block-color: #671209;
+  border-radius: 25px;
+  border-block-color: #d12715;
   animation: pulse 1s infinite;
-  background-color: #48e21d;
+  background-color: #e21dc7;
   
 }
 .board > div.mine {
