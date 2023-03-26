@@ -68,6 +68,10 @@ export default function BoardBuilder(props){
       }
     }
     setGrid( tmp_grid );
+    if( baseWords.length > 0 ){
+      placeWords( );
+
+    }
   }
   const fetchWords = ()=>{
     //Now let's get some data
@@ -75,18 +79,22 @@ export default function BoardBuilder(props){
       'mgmodell/corpora/master/data/words/common.json';
          axios.get(url )
           .then((resp) =>{
-            const words = resp.data.commonWords.filter(word => word.length < 9 );
+            const words = resp.data.commonWords.filter((word) =>{
+              return word !== undefined && word.length < 9 
+            } );
             setBaseWords( words );
           })
     
   }
 
+  /*
   useEffect( ()=>{
     if( baseWords.length > 0 && placedWords.length < 1 ){
       placeWords( );
     }
     
   },[placedWords])
+  */
 
   useEffect( ()=>{
     initBoard( );
@@ -95,17 +103,20 @@ export default function BoardBuilder(props){
   },[])
 
   const placeWords = ()=>{
-    const count = 10 + (Math.random() * 20);
+    const count = 10 + Math.round( (Math.random() * 20) );
+    console.log( count );
     const tmpWords:Array<PlacedWord> = [];
     
     const tmpUsedCells = [...usedCells];
     for( let index = 0; index < count; index++ ){
-      const place = Math.round( baseWords.length * Math.random() );
+      console.log( index, 'of', count );
+      const place = Math.floor( baseWords.length * Math.random() );
       const proposedWord = baseWords[ place ];
       const placedWord:PlacedWord = {
         word: proposedWord,
         place: place
       };
+      //console.log( index, placedWord, placedWord.place, placedWord.word)
 
       if( tmpUsedCells.length < 1 ){
         const orientation = Math.round( Math.random() * 2 );
@@ -196,11 +207,12 @@ export default function BoardBuilder(props){
   }
   const isValidPlacement = ( placedWord:PlacedWord ) =>{
     let valid = false;
+    console.log( placedWord );
     if( (placedWord.orientation === Orientation.HORIZONTAL ||
           placedWord.orientation === Orientation.VERTICAL ) &&
           placedWord.word !== '' & placedWord.word.length > 1 ){
 
-      const baseWord = findFullWord( placedWord.x, placedWord.y, placedWord.orientation );
+      const baseWord = findFullWord( placedWord.x, placedWord.y, placedWord.orientation, placedWord.word );
       if( baseWords.indexOf( baseWord.word ) ){
         const foundWords = [ baseWord ];
         const crossOrientation = placedWord.orientation = Orientation.HORIZONTAL ? Orientation.VERTICAL : Orientation.HORIZONTAL;
@@ -217,7 +229,7 @@ export default function BoardBuilder(props){
     }
   }
 
-  const findFullWord = ( startX:number, startY:number, orientation:Orientation ) => {
+  const findFullWord = ( startX:number, startY:number, orientation:Orientation, baseWord = '' ) => {
 
     const crawler = orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
     let index = 0;
@@ -225,16 +237,13 @@ export default function BoardBuilder(props){
     // Go backwards
     let curX = startX;
     let curY = startY;
-    console.log( 'backwards', curX, curY );
     do {
       curX = startX + (index * crawler[0]);
       curY = startY + (index * crawler[1]);
-      console.log( 'coords', curX, curY );
       index--;
     } while ( curX > 0 && curY > 0 && grid[curX][curY].letter !== '');
     // Last letter found at:
     index ++;
-    console.log( 'forwards' );
 
     const wordCells = [];
     curX = GRID_SIZE + 1;
@@ -247,11 +256,14 @@ export default function BoardBuilder(props){
       wordCells.push(grid[ curX][curY] );
       word += grid[curX][curY].letter;
 
-      console.log( 'coords', curX, curY, 'next cell', grid[curX][curY].letter);
 
       index++;
 
-    } while (curX < GRID_SIZE && curY < GRID_SIZE && grid[curX][curY].letter !== '');
+    } while (curX < (GRID_SIZE -1) &&
+             curY < (GRID_SIZE -1) &&
+             ( grid[curX][curY].letter !== '' ||
+               index <= baseWord.length )
+             );
 
     return {
       word: word,
