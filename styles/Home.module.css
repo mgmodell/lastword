@@ -7,13 +7,15 @@
 }
 
 .board > div {
-  border-radius: 15px;
-  width: 20px;
-  height: 20px;
-  background-color: #7700EE;
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  background-color: #22222288;
+  vertical-align: middle;
   text-align: center;
   border-color: #000000;
   border-width: thin;
+  margin: 3px;
   
 }
 .board > div.inactive {
@@ -29,7 +31,6 @@
   
 }
 .board > div.current {
-  border-radius: 25px;
   border-block-color: #d12715;
   animation: pulse 1s infinite;
   background-color: #e21dc7;
