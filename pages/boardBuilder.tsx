@@ -104,7 +104,6 @@ export default function BoardBuilder(props){
 
   const placeWords = ()=>{
     const count = 10 + Math.round( (Math.random() * 20) );
-    console.log( count );
     const tmpWords:Array<PlacedWord> = [];
     
     const tmpUsedCells = [...usedCells];
@@ -135,7 +134,7 @@ export default function BoardBuilder(props){
           placedWord.x = position;
         }
       } else {
-        const anchorCell = tmpUsedCells.reverse.find( (cell) => {
+        const anchorCell = tmpUsedCells.reverse().find( (cell) => {
           if( placeWords.length % 2 == 1 ){
 
           }
@@ -165,6 +164,7 @@ export default function BoardBuilder(props){
         
       }
       if( isValidPlacement( placedWord ) ){
+        console.log( 'adding', placedWord );
         tmpWords.push(placedWord );
         setPlacement( placedWord, tmpUsedCells );
       }
@@ -207,7 +207,7 @@ export default function BoardBuilder(props){
   }
   const isValidPlacement = ( placedWord:PlacedWord ) =>{
     let valid = false;
-    console.log( placedWord );
+    console.log( 'validating', placedWord );
     if( (placedWord.orientation === Orientation.HORIZONTAL ||
           placedWord.orientation === Orientation.VERTICAL ) &&
           placedWord.word !== '' & placedWord.word.length > 1 ){
@@ -219,14 +219,17 @@ export default function BoardBuilder(props){
         for( let index = 0; index < baseWord.cells.length;  index ++ ){
           const nextCell = baseWord.cells[ index ];
           const nextWord = findFullWord( nextCell.xPos, nextCell.yPos, crossOrientation );
-          if( baseWords.indexOf( nextWord.word ) < 0){
+          if( nextWord.word.length > 0 && baseWords.indexOf( nextWord.word ) < 0){
             return valid;
           }
 
         }
       }
       valid = true;
+    } else {
+      console.log( 'no check' );
     }
+    return valid;
   }
 
   const findFullWord = ( startX:number, startY:number, orientation:Orientation, baseWord = '' ) => {
@@ -254,9 +257,11 @@ export default function BoardBuilder(props){
       curX = startX + (index * crawler[0]);
       curY = startY + (index * crawler[1]);
       wordCells.push(grid[ curX][curY] );
-      word += grid[curX][curY].letter;
-
-
+      if( grid[curX][curY].letter === '' ){
+        word += baseWord.charAt( index );
+      } else {
+        word += grid[curX][curY].letter;
+      }
       index++;
 
     } while (curX < (GRID_SIZE -1) &&
@@ -305,9 +310,14 @@ export default function BoardBuilder(props){
         for( let y_pos = 0; y_pos < y; y_pos ++  ){
           const cur_pos = (x_pos * x ) + y_pos;
           const cur_cell = grid[x_pos][y_pos];
+          const classes = [cur_cell.letter === '' ? styles.irrelevant : styles.relevant];
+          if( cur_cell.focused ){
+            classes.push( styles.current );
+          }
+          
           output.push(
             <div key={cur_pos}
-              className={cur_cell.focused ? styles.current : styles.inactive }
+              className={classes.join(' ')}
               xpos={x_pos}
               ypos={y_pos}
               onClick={selectCell}

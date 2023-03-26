@@ -10,15 +10,19 @@
   border-radius: 10px;
   width: 30px;
   height: 30px;
-  background-color: #22222288;
   vertical-align: middle;
   text-align: center;
-  border-color: #000505;
-  border-width: thick;
   margin: 3px;
+  border-width: thin;
   
 }
-.board > div.inactive {
+.board > div.irrelevant {
+  background-color:rgb(241, 237, 231);
+  border-color: #ceb150;
+  
+}
+.board > div.relevant {
+  background-color:burlywood;
   border-color: #50ce6f;
   
 }
