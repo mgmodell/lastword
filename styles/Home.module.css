@@ -13,8 +13,8 @@
   background-color: #22222288;
   vertical-align: middle;
   text-align: center;
-  border-color: #000000;
-  border-width: thin;
+  border-color: #000505;
+  border-width: thick;
   margin: 3px;
   
 }
@@ -33,7 +33,7 @@
 .board > div.current {
   border-block-color: #d12715;
   animation: pulse 1s infinite;
-  background-color: #e21dc7;
+  background-color: #441de2;
   
 }
 .board > div.mine {

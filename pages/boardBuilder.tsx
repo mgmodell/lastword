@@ -110,7 +110,7 @@ export default function BoardBuilder(props){
       if( tmpUsedCells.length < 1 ){
         const orientation = Math.round( Math.random() * 2 );
         const hiLow = Math.round( Math.random() * 2 );
-        const position = Math.round( Math.random() * GRID_SIZE );
+        const position = Math.round( Math.random() * (GRID_SIZE - 1) );
         placedWord.orientation = orientation;
         let offset = 0;
         if( hiLow === 2 ){
@@ -124,7 +124,10 @@ export default function BoardBuilder(props){
           placedWord.x = position;
         }
       } else {
-        const anchorCell = tmpUsedCells.find( (cell) => {
+        const anchorCell = tmpUsedCells.reverse.find( (cell) => {
+          if( placeWords.length % 2 == 1 ){
+
+          }
           const result = proposedWord.search( cell.letter );
           return result !== -1;
         })
@@ -196,11 +199,66 @@ export default function BoardBuilder(props){
     if( (placedWord.orientation === Orientation.HORIZONTAL ||
           placedWord.orientation === Orientation.VERTICAL ) &&
           placedWord.word !== '' & placedWord.word.length > 1 ){
+
+      const baseWord = findFullWord( placedWord.x, placedWord.y, placedWord.orientation );
+      if( baseWords.indexOf( baseWord.word ) ){
+        const foundWords = [ baseWord ];
+        const crossOrientation = placedWord.orientation = Orientation.HORIZONTAL ? Orientation.VERTICAL : Orientation.HORIZONTAL;
+        for( let index = 0; index < baseWord.cells.length;  index ++ ){
+          const nextCell = baseWord.cells[ index ];
+          const nextWord = findFullWord( nextCell.xPos, nextCell.yPos, crossOrientation );
+          if( baseWords.indexOf( nextWord.word ) < 0){
+            return valid;
+          }
+
+        }
+      }
       valid = true;
     }
-    return valid;
-    
   }
+
+  const findFullWord = ( startX:number, startY:number, orientation:Orientation ) => {
+
+    const crawler = orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
+    let index = 0;
+    
+    // Go backwards
+    let curX = startX;
+    let curY = startY;
+    console.log( 'backwards', curX, curY );
+    do {
+      curX = startX + (index * crawler[0]);
+      curY = startY + (index * crawler[1]);
+      console.log( 'coords', curX, curY );
+      index--;
+    } while ( curX > 0 && curY > 0 && grid[curX][curY].letter !== '');
+    // Last letter found at:
+    index ++;
+    console.log( 'forwards' );
+
+    const wordCells = [];
+    curX = GRID_SIZE + 1;
+    curY = GRID_SIZE + 1;
+    let word = '';
+    //Collect forwards
+    do {
+      curX = startX + (index * crawler[0]);
+      curY = startY + (index * crawler[1]);
+      wordCells.push(grid[ curX][curY] );
+      word += grid[curX][curY].letter;
+
+      console.log( 'coords', curX, curY, 'next cell', grid[curX][curY].letter);
+
+      index++;
+
+    } while (curX < GRID_SIZE && curY < GRID_SIZE && grid[curX][curY].letter !== '');
+
+    return {
+      word: word,
+      cells: wordCells
+    }
+  }
+
   const selectCell = (event) => {
     const xPos = parseInt( event.target.attributes.xpos.value );
     const yPos = parseInt( event.target.attributes.ypos.value );
