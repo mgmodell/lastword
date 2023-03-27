@@ -19,6 +19,7 @@
 .board > div.irrelevant {
   background-color:rgb(241, 237, 231);
   border-color: #ceb150;
+  color: rgb(241, 237, 231);
   
 }
 .board > div.relevant {
@@ -37,7 +38,7 @@
 .board > div.current {
   border-block-color: #d12715;
   animation: pulse 1s infinite;
-  background-color: #441de2;
+  background-color: #9b860ed1;
   
 }
 .board > div.mine {
@@ -55,7 +56,7 @@
 	}
 
 	50% {
-		transform: scale(1);
+		transform: scale(1.05);
 		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
 	}
 
