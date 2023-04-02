@@ -80,21 +80,12 @@ export default function BoardBuilder(props){
          axios.get(url )
           .then((resp) =>{
             const words = resp.data.commonWords.filter((word) =>{
-              return word !== undefined && word.length < 9 
+              return word?.length < 9 
             } );
             setBaseWords( words );
           })
     
   }
-
-  /*
-  useEffect( ()=>{
-    if( baseWords.length > 0 && placedWords.length < 1 ){
-      placeWords( );
-    }
-    
-  },[placedWords])
-  */
 
   useEffect( ()=>{
     initBoard( );
@@ -108,14 +99,12 @@ export default function BoardBuilder(props){
     
     const tmpUsedCells = [...usedCells];
     for( let index = 0; index < count; index++ ){
-      console.log( index, 'of', count );
       const place = Math.floor( baseWords.length * Math.random() );
       const proposedWord = baseWords[ place ];
       const placedWord:PlacedWord = {
         word: proposedWord,
         place: place
       };
-      //console.log( index, placedWord, placedWord.place, placedWord.word)
 
       if( tmpUsedCells.length < 1 ){
         const orientation = Math.round( Math.random() * 2 );
@@ -135,29 +124,22 @@ export default function BoardBuilder(props){
         }
       } else {
         const anchorCell = tmpUsedCells.reverse().find( (cell) => {
-          if( placeWords.length % 2 == 1 ){
-
-          }
           const result = proposedWord.search( cell.letter );
           return result !== -1;
         })
         if( anchorCell !== undefined ){
-          if( anchorCell?.yPos > 0 && anchorCell?.yPos < 17 &&
-              grid[anchorCell.xPos][anchorCell.yPos - 1] !== undefined &&
-              grid[anchorCell.xPos][anchorCell.yPos + 1] !== undefined &&
-              grid[anchorCell.xPos][anchorCell.yPos - 1].letter === '' &&
-              grid[anchorCell.xPos][anchorCell.yPos + 1].letter === '' ){
+          if( anchorCell.yPos > 0 && anchorCell.yPos < 17 &&
+              ( grid[anchorCell.xPos][anchorCell.yPos - 1]?.letter !== '' ||
+              grid[anchorCell.xPos][anchorCell.yPos + 1]?.letter !== '' ) ){
                 placedWord.orientation = Orientation.HORIZONTAL;
-                placedWord.x = anchorCell.xPos;
-                placedWord.y = anchorCell.yPos - proposedWord.search( anchorCell?.letter );
-          } else if( anchorCell?.xPos > 0 && anchorCell?.yPos < 17 &&
-              grid[anchorCell.xPos - 1] !== undefined &&
-              grid[anchorCell.xPos + 1] !== undefined &&
-              grid[anchorCell.xPos - 1][anchorCell.yPos].letter === '' &&
-              grid[anchorCell.xPos + 1][anchorCell.yPos].letter === '' ){
-                placedWord.orientation = Orientation.VERTICAL;
-                placedWord.x = anchorCell.xPos - proposedWord.search( anchorCell?.letter );
                 placedWord.y = anchorCell.yPos;
+                placedWord.x = anchorCell.xPos - proposedWord.search( anchorCell.letter );
+          } else if( anchorCell.xPos > 0 && anchorCell.yPos < 17 &&
+              ( grid[anchorCell.xPos - 1][anchorCell.yPos]?.letter !== '' ||
+              grid[anchorCell.xPos + 1][anchorCell.yPos]?.letter !== '' ) ){
+                placedWord.orientation = Orientation.VERTICAL;
+                placedWord.y = anchorCell.yPos - proposedWord.search( anchorCell.letter );
+                placedWord.x = anchorCell.xPos;
           }
 
         }
@@ -227,7 +209,7 @@ export default function BoardBuilder(props){
       }
       valid = true;
     } else {
-      console.log( 'no check' );
+      console.log( 'no check', placedWord );
     }
     return valid;
   }
@@ -238,8 +220,8 @@ export default function BoardBuilder(props){
     let index = 0;
     
     // Go backwards
-    let curX = startX;
-    let curY = startY;
+    var curX = startX;
+    var curY = startY;
     do {
       curX = startX + (index * crawler[0]);
       curY = startY + (index * crawler[1]);
@@ -256,13 +238,17 @@ export default function BoardBuilder(props){
     do {
       curX = startX + (index * crawler[0]);
       curY = startY + (index * crawler[1]);
-      wordCells.push(grid[ curX][curY] );
-      if( grid[curX][curY].letter === '' ){
-        word += baseWord.charAt( index );
-      } else {
-        word += grid[curX][curY].letter;
+      if( curX >= 0 && curY >= 0 && 
+          curX < GRID_SIZE && curY < GRID_SIZE){
+        wordCells.push(grid[ curX][curY] );
+        if( grid[curX][curY].letter === '' ){
+          word += baseWord.charAt( index );
+        } else {
+          word += grid[curX][curY].letter;
+        }
+        index++;
+
       }
-      index++;
 
     } while (curX < (GRID_SIZE -1) &&
              curY < (GRID_SIZE -1) &&
