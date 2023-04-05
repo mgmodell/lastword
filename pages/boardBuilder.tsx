@@ -45,11 +45,13 @@ export default function BoardBuilder(props){
   const [curCell, setCurCell] = useState<Cell>()
   const [usedCells, setUsedCells] = useState(Array<Cell>);
 
-  const GRID_SIZE = 16;
+  const GRID_SIZE = 17;
   const x = GRID_SIZE;
   const y = GRID_SIZE;
   
   const initBoard = () => {
+
+
     setPlacedWords( [] );
     setUsedCells( [] );
     setGrid({})
@@ -72,6 +74,12 @@ export default function BoardBuilder(props){
       placeWords( );
 
     }
+
+    const boardBase = document.querySelector(`.${styles.board}`);
+    boardBase?.style.setProperty( 
+      'grid-template-columns',
+      `repeat( ${GRID_SIZE} , 1fr )`
+    );
   }
   const fetchWords = ()=>{
     //Now let's get some data
@@ -88,8 +96,8 @@ export default function BoardBuilder(props){
   }
 
   useEffect( ()=>{
-    initBoard( );
     fetchWords( );
+    initBoard( );
     
   },[])
 
@@ -175,7 +183,7 @@ export default function BoardBuilder(props){
               curY = placedWord.y;
 
             }
-          if( curX >= 0 && curX < 16 && curY >= 0 && curY < 16 ){
+          if( curX >= 0 && curX < GRID_SIZE && curY >= 0 && curY < GRID_SIZE ){
             let tmpCell = tmpGrid[curX][curY];
             tmpCell.letter = placedWord.word.charAt( curChar );
             tmpCell.mine = false;
@@ -285,8 +293,8 @@ export default function BoardBuilder(props){
   }, [baseWords])
   
   const board = useMemo( () =>{
-    const x = 16;
-    const y = 16;
+    const x = GRID_SIZE;
+    const y = GRID_SIZE;
     
     if( Object.keys(grid).length < x ){
       return null;

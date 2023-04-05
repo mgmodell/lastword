@@ -1,3 +1,6 @@
+:root {
+  --board-size: 16;
+}
 html,
 body {
   padding: 0;
