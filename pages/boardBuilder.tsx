@@ -21,57 +21,75 @@ type Cell = {
   enhancement: Enhancement;
   letter: string;
 };
-type Board = {
-  rows: {
-    [key: number]: {
-      [key: number]: Cell;
-    }
-  }
-}
-
 type PlacedWord = {
   x: number;
   y: number;
   orientation: Orientation;
-  word: string;
+  word: String;
   place: number;
 };
 
-export default function BoardBuilder(props){
+type Board = {
+  xMax: number;
+  yMax: number;
+  rows: {
+    [key: number]: {
+      [key: number]: Cell;
+    }
+  };
+  placedWords: Array<PlacedWord>,
+  usedCells: Array<Cell>,
+}
 
-  const [grid,setGrid] = useState<Board>({});
-  const [placedWords, setPlacedWords] = useState(Array<PlacedWord>);
-  const [baseWords, setBaseWords] = useState([] );
-  const [curCell, setCurCell] = useState<Cell>()
-  const [usedCells, setUsedCells] = useState(Array<Cell>);
+
+export default function BoardBuilder(props){
 
   const GRID_SIZE = 17;
   const x = GRID_SIZE;
   const y = GRID_SIZE;
   
+  const [gameBoard,setGameBoard] = useState<Board>({
+    xMax: 0,
+    yMax: 0,
+    rows: [],
+    placedWords: [],
+    usedCells: [],
+  });
+
+  const [baseWords, setBaseWords] = useState([] );
+  const [curCell, setCurCell] = useState<Cell>()
+  //const [placedWords, setPlacedWords] = useState(Array<PlacedWord>);
+  //const [usedCells, setUsedCells] = useState(Array<Cell>);
+
   const initBoard = () => {
 
 
-    setPlacedWords( [] );
-    setUsedCells( [] );
-    setGrid({})
-    const tmp_grid:Board = {};
-    for( let x_pos = 0; x_pos < x; x_pos ++  ){
-      tmp_grid[x_pos] = {};
-      for( let y_pos = 0; y_pos < y; y_pos ++  ){
-        tmp_grid[x_pos][y_pos] ={
-          xPos: x_pos,
-          yPos: y_pos,
-          mine: false,
-          focused: false,
-          enhancement: Enhancement.NA,
-          letter: ''
-        }
+    //setPlacedWords( [] );
+    //setUsedCells( [] );
+    //setGameBoard({})
+    const tmp_grid = [];
+
+    for( let x_pos = 0; x_pos < gameBoard.xMax; x_pos ++  ){
+      tmp_grid.push( [] );
+      for( let y_pos = 0; y_pos < gameBoard.yMax; y_pos ++  ){
+        const nextCell:Cell = {
+            xPos: x_pos,
+            yPos: y_pos,
+            mine: false,
+            focused: false,
+            enhancement: Enhancement.NA,
+            letter: ''
+          };
+
+        tmp_grid[x_pos].push( nextCell );
+
       }
     }
-    setGrid( tmp_grid );
+    setGameBoard( tmp_grid );
     if( baseWords.length > 0 ){
-      placeWords( );
+      const builtBoard = buildBoard( x, y, baseWords );
+      setGameBoard( builtBoard );
+      //placeWords( );
 
     }
 
@@ -85,6 +103,7 @@ export default function BoardBuilder(props){
     //Now let's get some data
     const url = 'https://raw.githubusercontent.com/' +
       'mgmodell/corpora/master/data/words/common.json';
+         //setBaseWords( ['hello', 'goodbye', 'transit', 'traffic', ] );
          axios.get(url )
           .then((resp) =>{
             const words = resp.data.commonWords.filter((word) =>{
@@ -100,6 +119,56 @@ export default function BoardBuilder(props){
     initBoard( );
     
   },[])
+
+  const buildBoard = ( xMax: number, yMax: number, words: Array<String> ): Board=>{
+    const boardGrid: Array<Array<Cell>> = [];
+
+    for( let x_pos = 0; x_pos < xMax; x_pos ++  ){
+      boardGrid.push( [] );
+      for( let y_pos = 0; y_pos < yMax; y_pos ++  ){
+        const nextCell: Cell = 
+          {
+            xPos: x_pos,
+            yPos: y_pos,
+            mine: false,
+            focused: false,
+            enhancement: Enhancement.NA,
+            letter: ''
+          };
+
+        boardGrid[x_pos].push(
+          nextCell
+        ) 
+      }
+    }
+    const tmpBoard: Board = {
+      xMax: xMax,
+      yMax: yMax,
+      rows: boardGrid,
+      placedWords: [],
+      usedCells: []
+    }
+    //build 
+    //Select and place first word
+    let nextWord = getWord( words );
+
+    return tmpBoard;
+
+  }
+
+  const getWord = ( words: Array<String> ):PlacedWord=>{
+    const orientation = Math.floor( Math.random( ) * 2 )  > 1 ? Orientation.HORIZONTAL : Orientation.VERTICAL;
+    const place = Math.floor( Math.random( ) * words.length)
+
+    return ({
+      x: -1,
+      y: -1,
+      orientation: orientation,
+      word: words[ place ],
+      place: place
+    })
+
+  }
 
   const placeWords = ()=>{
     const count = 10 + Math.round( (Math.random() * 20) );
@@ -137,14 +206,14 @@ export default function BoardBuilder(props){
         })
         if( anchorCell !== undefined ){
           if( anchorCell.yPos > 0 && anchorCell.yPos < 17 &&
-              ( grid[anchorCell.xPos][anchorCell.yPos - 1]?.letter !== '' ||
-              grid[anchorCell.xPos][anchorCell.yPos + 1]?.letter !== '' ) ){
+              ( gameBoard[anchorCell.xPos][anchorCell.yPos - 1]?.letter !== '' ||
+              gameBoard[anchorCell.xPos][anchorCell.yPos + 1]?.letter !== '' ) ){
                 placedWord.orientation = Orientation.HORIZONTAL;
                 placedWord.y = anchorCell.yPos;
                 placedWord.x = anchorCell.xPos - proposedWord.search( anchorCell.letter );
           } else if( anchorCell.xPos > 0 && anchorCell.yPos < 17 &&
-              ( grid[anchorCell.xPos - 1][anchorCell.yPos]?.letter !== '' ||
-              grid[anchorCell.xPos + 1][anchorCell.yPos]?.letter !== '' ) ){
+              ( gameBoard[anchorCell.xPos - 1][anchorCell.yPos]?.letter !== '' ||
+              gameBoard[anchorCell.xPos + 1][anchorCell.yPos]?.letter !== '' ) ){
                 placedWord.orientation = Orientation.VERTICAL;
                 placedWord.y = anchorCell.yPos - proposedWord.search( anchorCell.letter );
                 placedWord.x = anchorCell.xPos;
@@ -164,7 +233,7 @@ export default function BoardBuilder(props){
     
   }
   const setPlacement = ( placedWord:PlacedWord, usedCellsStore:Array<Cell>,  ) =>{
-        const tmpGrid:Board = Object.assign( {}, grid );
+        const tmpGrid:Board = Object.assign( {}, gameBoard );
         let curX = placedWord.x;
         let curY = placedWord.y;
         if( curX >= 0 && curX < 17 && curY >= 0 && curY < 17 ){
@@ -191,7 +260,7 @@ export default function BoardBuilder(props){
 
           }
         }
-        setGrid( tmpGrid );
+        setGameBoard( tmpGrid );
         setUsedCells( usedCellsStore );
     
   }
@@ -234,7 +303,7 @@ export default function BoardBuilder(props){
       curX = startX + (index * crawler[0]);
       curY = startY + (index * crawler[1]);
       index--;
-    } while ( curX > 0 && curY > 0 && grid[curX][curY].letter !== '');
+    } while ( curX > 0 && curY > 0 && gameBoard[curX][curY].letter !== '');
     // Last letter found at:
     index ++;
 
@@ -248,11 +317,11 @@ export default function BoardBuilder(props){
       curY = startY + (index * crawler[1]);
       if( curX >= 0 && curY >= 0 && 
           curX < GRID_SIZE && curY < GRID_SIZE){
-        wordCells.push(grid[ curX][curY] );
-        if( grid[curX][curY].letter === '' ){
+        wordCells.push(gameBoard[ curX][curY] );
+        if( gameBoard[curX][curY].letter === '' ){
           word += baseWord.charAt( index );
         } else {
-          word += grid[curX][curY].letter;
+          word += gameBoard[curX][curY].letter;
         }
         index++;
 
@@ -260,7 +329,7 @@ export default function BoardBuilder(props){
 
     } while (curX < (GRID_SIZE -1) &&
              curY < (GRID_SIZE -1) &&
-             ( grid[curX][curY].letter !== '' ||
+             ( gameBoard[curX][curY].letter !== '' ||
                index <= baseWord.length )
              );
 
@@ -273,7 +342,7 @@ export default function BoardBuilder(props){
   const selectCell = (event) => {
     const xPos = parseInt( event.target.attributes.xpos.value );
     const yPos = parseInt( event.target.attributes.ypos.value );
-    const tmp_grid = Object.assign( {}, grid );
+    const tmp_grid = Object.assign( {}, gameBoard );
     
     if( curCell != undefined ){
       const prevCell = Object.assign({}, curCell);
@@ -284,7 +353,7 @@ export default function BoardBuilder(props){
     let cur_cell:Cell = tmp_grid[xPos][yPos];
     
     cur_cell.focused = true;
-    setGrid( tmp_grid );
+    setGameBoard( tmp_grid );
     setCurCell( cur_cell );
     
   }
@@ -296,14 +365,14 @@ export default function BoardBuilder(props){
     const x = GRID_SIZE;
     const y = GRID_SIZE;
     
-    if( Object.keys(grid).length < x ){
+    if( Object.keys(gameBoard.rows).length < x ){
       return null;
     } else {
       const output = [];
       for( let x_pos = 0; x_pos < x; x_pos ++  ){
         for( let y_pos = 0; y_pos < y; y_pos ++  ){
           const cur_pos = (x_pos * x ) + y_pos;
-          const cur_cell = grid[x_pos][y_pos];
+          const cur_cell = gameBoard.rows[x_pos][y_pos];
           const classes = [cur_cell.letter === '' ? styles.irrelevant : styles.relevant];
           if( cur_cell.focused ){
             classes.push( styles.current );
@@ -327,7 +396,7 @@ export default function BoardBuilder(props){
       
     }
     
-  }, [grid, placedWords, usedCells] );
+  }, [gameBoard] );
 
   return(
     <Fragment>
