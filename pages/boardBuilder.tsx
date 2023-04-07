@@ -20,6 +20,7 @@ type Cell = {
   focused: boolean;
   enhancement: Enhancement;
   letter: string;
+  words: Array<PlacedWord>;
 };
 type PlacedWord = {
   x: number;
@@ -27,6 +28,7 @@ type PlacedWord = {
   orientation: Orientation;
   word: String;
   place: number;
+  cells: Array<Cell>;
 };
 
 type Board = {
@@ -45,8 +47,10 @@ type Board = {
 export default function BoardBuilder(props){
 
   const GRID_SIZE = 17;
+  //Height
   const GRID_X = GRID_SIZE;
-  const GRID_Y = GRID_SIZE;
+  //Width
+  const GRID_Y = GRID_SIZE - 2;
 
   const genCleanBoard = (): Board =>{
     return( {
@@ -65,7 +69,8 @@ export default function BoardBuilder(props){
       mine: false,
       focused: false,
       enhancement: Enhancement.NA,
-      letter: ''
+      letter: '',
+      words: [],
     });
   }
 
@@ -75,15 +80,9 @@ export default function BoardBuilder(props){
 
   const [baseWords, setBaseWords] = useState([] );
   const [curCell, setCurCell] = useState<Cell>()
-  //const [placedWords, setPlacedWords] = useState(Array<PlacedWord>);
-  //const [usedCells, setUsedCells] = useState(Array<Cell>);
 
   const initBoard = () => {
 
-
-    //setPlacedWords( [] );
-    //setUsedCells( [] );
-    //setGameBoard({})
     const newBoard = genCleanBoard( );
 
     const tmpGrid = [];
@@ -110,7 +109,7 @@ export default function BoardBuilder(props){
     const boardBase = document.querySelector(`.${styles.board}`);
     boardBase?.style.setProperty( 
       'grid-template-columns',
-      `repeat( ${GRID_SIZE} , 1fr )`
+      `repeat( ${GRID_Y} , 1fr )`
     );
   }
   const fetchWords = ()=>{
@@ -160,13 +159,14 @@ export default function BoardBuilder(props){
     nextWord.x = Math.floor( tmpBoard.xMax / 2 );
     //The following method mutates the input board
     lockPlacement( nextWord, tmpBoard );
+    console.log( tmpBoard );
 
     return tmpBoard;
 
   }
 
   const getWord = ( words: Array<String> ):PlacedWord=>{
-    const orientation = Math.floor( Math.random( ) * 2 )  > 1 ? Orientation.HORIZONTAL : Orientation.VERTICAL;
+    const orientation = Math.floor( Math.random( ) * 2 )  === 1 ? Orientation.HORIZONTAL : Orientation.VERTICAL;
     const place = Math.floor( Math.random( ) * words.length)
 
     return ({
@@ -174,7 +174,8 @@ export default function BoardBuilder(props){
       y: -1,
       orientation: orientation,
       word: words[ place ],
-      place: place
+      place: place,
+      cells: [],
     })
 
   }
@@ -184,74 +185,16 @@ export default function BoardBuilder(props){
     const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
     for( let index = 0; index < placedWord.word.length; index++ ){
       //Set the cells, store them in the board and the PlacedWord
-
-
+      const nextX = placedWord.x + ( crawler[0] * index );
+      const nextY = placedWord.y + ( crawler[1] * index );
+      const nextCell = gameBoard.rows[nextX][nextY]
+      nextCell.letter = placedWord.word.charAt( index );
+      nextCell.words.push( placedWord );
+      placedWord.cells.push( nextCell );
     }
 
   }
 
-  const placeWords = ()=>{
-    const count = 10 + Math.round( (Math.random() * 20) );
-    const tmpWords:Array<PlacedWord> = [];
-    
-    const tmpUsedCells = [...usedCells];
-    for( let index = 0; index < count; index++ ){
-      const place = Math.floor( baseWords.length * Math.random() );
-      const proposedWord = baseWords[ place ];
-      const placedWord:PlacedWord = {
-        word: proposedWord,
-        place: place
-      };
-
-      if( tmpUsedCells.length < 1 ){
-        const orientation = Math.round( Math.random() * 2 );
-        const hiLow = Math.round( Math.random() * 2 );
-        const position = Math.round( Math.random() * (GRID_SIZE - 1) );
-        placedWord.orientation = orientation;
-        let offset = 0;
-        if( hiLow === 2 ){
-          offset = GRID_SIZE - placedWord.word.length;
-        }
-        if( Orientation.HORIZONTAL !== placedWord.orientation ){
-          placedWord.x = offset;
-          placedWord.y = position;
-        } else {
-          placedWord.y = offset;
-          placedWord.x = position;
-        }
-      } else {
-        const anchorCell = tmpUsedCells.reverse().find( (cell) => {
-          const result = proposedWord.search( cell.letter );
-          return result !== -1;
-        })
-        if( anchorCell !== undefined ){
-          if( anchorCell.yPos > 0 && anchorCell.yPos < 17 &&
-              ( gameBoard[anchorCell.xPos][anchorCell.yPos - 1]?.letter !== '' ||
-              gameBoard[anchorCell.xPos][anchorCell.yPos + 1]?.letter !== '' ) ){
-                placedWord.orientation = Orientation.HORIZONTAL;
-                placedWord.y = anchorCell.yPos;
-                placedWord.x = anchorCell.xPos - proposedWord.search( anchorCell.letter );
-          } else if( anchorCell.xPos > 0 && anchorCell.yPos < 17 &&
-              ( gameBoard[anchorCell.xPos - 1][anchorCell.yPos]?.letter !== '' ||
-              gameBoard[anchorCell.xPos + 1][anchorCell.yPos]?.letter !== '' ) ){
-                placedWord.orientation = Orientation.VERTICAL;
-                placedWord.y = anchorCell.yPos - proposedWord.search( anchorCell.letter );
-                placedWord.x = anchorCell.xPos;
-          }
-
-        }
-        
-      }
-      if( isValidPlacement( placedWord ) ){
-        console.log( 'adding', placedWord );
-        tmpWords.push(placedWord );
-        setPlacement( placedWord, tmpUsedCells );
-      }
-    }
-    setUsedCells( tmpUsedCells );
-    setPlacedWords( tmpWords );
-    
-  }
   const setPlacement = ( placedWord:PlacedWord, usedCellsStore:Array<Cell>,  ) =>{
         const tmpGrid:Board = Object.assign( {}, gameBoard );
         let curX = placedWord.x;
@@ -272,7 +215,7 @@ export default function BoardBuilder(props){
               curY = placedWord.y;
 
             }
-          if( curX >= 0 && curX < GRID_SIZE && curY >= 0 && curY < GRID_SIZE ){
+          if( curX >= 0 && curX < GRID_X && curY >= 0 && curY < GRID_Y ){
             let tmpCell = tmpGrid[curX][curY];
             tmpCell.letter = placedWord.word.charAt( curChar );
             tmpCell.mine = false;
@@ -328,15 +271,15 @@ export default function BoardBuilder(props){
     index ++;
 
     const wordCells = [];
-    curX = GRID_SIZE + 1;
-    curY = GRID_SIZE + 1;
+    curX = GRID_X + 1;
+    curY = GRID_Y + 1;
     let word = '';
     //Collect forwards
     do {
       curX = startX + (index * crawler[0]);
       curY = startY + (index * crawler[1]);
       if( curX >= 0 && curY >= 0 && 
-          curX < GRID_SIZE && curY < GRID_SIZE){
+          curX < GRID_X && curY < GRID_Y){
         wordCells.push(gameBoard[ curX][curY] );
         if( gameBoard[curX][curY].letter === '' ){
           word += baseWord.charAt( index );
@@ -347,8 +290,8 @@ export default function BoardBuilder(props){
 
       }
 
-    } while (curX < (GRID_SIZE -1) &&
-             curY < (GRID_SIZE -1) &&
+    } while (curX < (GRID_X -1) &&
+             curY < (GRID_Y -1) &&
              ( gameBoard[curX][curY].letter !== '' ||
                index <= baseWord.length )
              );
@@ -362,51 +305,51 @@ export default function BoardBuilder(props){
   const selectCell = (event) => {
     const xPos = parseInt( event.target.attributes.xpos.value );
     const yPos = parseInt( event.target.attributes.ypos.value );
-    const tmp_grid = Object.assign( {}, gameBoard );
+    const tmpBoard = Object.assign( {}, gameBoard );
     
     if( curCell != undefined ){
       const prevCell = Object.assign({}, curCell);
       prevCell.focused = false;
-      tmp_grid[prevCell.xPos][prevCell.yPos] = prevCell;
+      tmpBoard.rows[prevCell.xPos][prevCell.yPos] = prevCell;
     }
     
-    let cur_cell:Cell = tmp_grid[xPos][yPos];
+    const newCurCell:Cell = tmpBoard.rows[xPos][yPos];
     
-    cur_cell.focused = true;
-    setGameBoard( tmp_grid );
-    setCurCell( cur_cell );
+    newCurCell.focused = true;
+    setGameBoard( tmpBoard );
+    setCurCell( newCurCell );
     
   }
+
   const selectWords = useMemo( () =>{
     return baseWords.filter( (word) => /[xzqwvkgfyb]/.test( word ) )
   }, [baseWords])
   
   const board = useMemo( () =>{
-    const x = GRID_SIZE;
-    const y = GRID_SIZE;
     
-    if( gameBoard.rows.length < x ){
+    if( gameBoard.rows.length < GRID_X ){
       return (
         <div className={styles.board}></div>
       );
     } else {
       const output = [];
-      for( let x_pos = 0; x_pos < x; x_pos ++  ){
-        for( let y_pos = 0; y_pos < y; y_pos ++  ){
-          const cur_pos = (x_pos * x ) + y_pos;
-          const cur_cell = gameBoard.rows[x_pos][y_pos];
-          const classes = [cur_cell.letter === '' ? styles.irrelevant : styles.relevant];
-          if( cur_cell.focused ){
+      for( let xPos = 0; xPos < GRID_X; xPos ++  ){
+        for( let yPos = 0; yPos < GRID_Y; yPos ++  ){
+
+          const curPos = (xPos * GRID_X ) + yPos;
+          const selCell = gameBoard.rows[xPos][yPos];
+          const classes = [selCell.letter === '' ? styles.irrelevant : styles.relevant];
+          if( selCell.focused ){
             classes.push( styles.current );
           }
           
           output.push(
-            <div key={cur_pos}
+            <div key={curPos}
               className={classes.join(' ')}
-              xpos={x_pos}
-              ypos={y_pos}
+              xpos={xPos}
+              ypos={yPos}
               onClick={selectCell}
-              >{cur_cell.letter.length > 0 ? cur_cell.letter : '-'}</div>
+              >{selCell.letter.length > 0 ? selCell.letter : '-'}</div>
           )
         }
       }
