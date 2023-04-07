@@ -162,7 +162,7 @@ export default function BoardBuilder(props){
 
     //Slot, validate and then lock subsequent word(s)
     nextWord = getWord( words );
-    if( findPlacementFor( nextWord, tmpBoard ) /* && isValidPlacement( nextWord, tmpBoard ) */ ){
+    if( findPlacementFor( nextWord, tmpBoard ) && isValidPlacement( nextWord, tmpBoard ) ){
       lockPlacement( nextWord, tmpBoard );
     }
 
@@ -230,33 +230,28 @@ export default function BoardBuilder(props){
       placedWord.cells.push( nextCell );
     }
     localGameBoard.placedWords.push( placedWord );
-    localGameBoard.usedCells = [...localGameBoard.usedCells, ...placedWord.cells];//.concat( placedWord.cells );
+    localGameBoard.usedCells = [...localGameBoard.usedCells, ...placedWord.cells];
 
   }
 
-  const isValidPlacement = ( placedWord:PlacedWord, localGameBoard: Board ) =>{
+  const isValidPlacement = ( placedWord:PlacedWord, localGameBoard: Board ):boolean =>{
     let valid = false;
-    console.log( 'validating', placedWord );
-    if( (placedWord.orientation === Orientation.HORIZONTAL ||
-          placedWord.orientation === Orientation.VERTICAL ) &&
-          placedWord.word !== '' & placedWord.word.length > 1 ){
-
-      const baseWord = findFullWord( placedWord.x, placedWord.y, placedWord.orientation, placedWord.word );
-      if( baseWords.indexOf( baseWord.word ) ){
-        const foundWords = [ baseWord ];
-        const crossOrientation = placedWord.orientation = Orientation.HORIZONTAL ? Orientation.VERTICAL : Orientation.HORIZONTAL;
-        for( let index = 0; index < baseWord.cells.length;  index ++ ){
-          const nextCell = baseWord.cells[ index ];
-          const nextWord = findFullWord( nextCell.xPos, nextCell.yPos, crossOrientation );
-          if( nextWord.word.length > 0 && baseWords.indexOf( nextWord.word ) < 0){
-            return valid;
-          }
-
+    const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
+    const wordLen = placedWord.word.length;
+    //Check boundaries
+    if( placedWord.x >= 0 && placedWord.y >= 0 &&
+        placedWord.x + (crawler[0] * wordLen ) <= localGameBoard.xMax  &&
+        placedWord.y + (crawler[1] * wordLen ) <= localGameBoard.yMax 
+      ){
+      //Check that no cells must change
+      for( let index = 0; index < wordLen; index++ ){
+        const nextCell: Cell = localGameBoard.rows[ placedWord.x + (crawler[0] * index )]
+                                                  [ placedWord.y + (crawler[1] * index) ];
+        if( nextCell.letter !== '' && nextCell.letter !== placedWord.word.charAt( index )){
+          return valid;
         }
       }
       valid = true;
-    } else {
-      console.log( 'no check', placedWord );
     }
     return valid;
   }
