@@ -161,9 +161,13 @@ export default function BoardBuilder(props){
     lockPlacement( nextWord, tmpBoard );
 
     //Slot, validate and then lock subsequent word(s)
-    nextWord = getWord( words );
-    if( findPlacementFor( nextWord, tmpBoard ) && isValidPlacement( nextWord, tmpBoard ) ){
-      lockPlacement( nextWord, tmpBoard );
+
+    for(let wordCount = 1; wordCount < 10 + (Math.random( ) * 150); wordCount++ ){
+      nextWord = getWord( words );
+      if( findPlacementFor( nextWord, tmpBoard ) && isValidPlacement( nextWord, tmpBoard ) ){
+        lockPlacement( nextWord, tmpBoard );
+      }
+
     }
 
 
@@ -198,8 +202,6 @@ export default function BoardBuilder(props){
       const anchorCell: Cell = candidateCells[ cellIndex ];
       const cellFoundAt = unPlacedWord.word.indexOf( anchorCell.letter );
       if( cellFoundAt >= 0 ){
-        const anchorCell = candidateCells[cellFoundAt];
-        console.log( anchorCell );
         found = true;
         if( anchorCell.words[0].orientation === Orientation.HORIZONTAL ){
           unPlacedWord.orientation = Orientation.VERTICAL;
@@ -213,7 +215,6 @@ export default function BoardBuilder(props){
         }
       }
     }while( candidateCount < 4 && !found )
-    console.log( found, unPlacedWord );
     return found;
   }
 
@@ -256,53 +257,6 @@ export default function BoardBuilder(props){
     return valid;
   }
 
-  const findFullWord = ( startX:number, startY:number, orientation:Orientation, baseWord = '' ) => {
-
-    const crawler = orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
-    let index = 0;
-    
-    // Go backwards
-    var curX = startX;
-    var curY = startY;
-    do {
-      curX = startX + (index * crawler[0]);
-      curY = startY + (index * crawler[1]);
-      index--;
-    } while ( curX > 0 && curY > 0 && gameBoard[curX][curY].letter !== '');
-    // Last letter found at:
-    index ++;
-
-    const wordCells = [];
-    curX = GRID_X + 1;
-    curY = GRID_Y + 1;
-    let word = '';
-    //Collect forwards
-    do {
-      curX = startX + (index * crawler[0]);
-      curY = startY + (index * crawler[1]);
-      if( curX >= 0 && curY >= 0 && 
-          curX < GRID_X && curY < GRID_Y){
-        wordCells.push(gameBoard[ curX][curY] );
-        if( gameBoard[curX][curY].letter === '' ){
-          word += baseWord.charAt( index );
-        } else {
-          word += gameBoard[curX][curY].letter;
-        }
-        index++;
-
-      }
-
-    } while (curX < (GRID_X -1) &&
-             curY < (GRID_Y -1) &&
-             ( gameBoard.rows[curX][curY].letter !== '' ||
-               index <= baseWord.length )
-             );
-
-    return {
-      word: word,
-      cells: wordCells
-    }
-  }
 
   const selectCell = (event) => {
     const xPos = parseInt( event.target.attributes.xpos.value );
