@@ -159,7 +159,13 @@ export default function BoardBuilder(props){
     nextWord.x = Math.floor( tmpBoard.xMax / 2 );
     //The following method mutates the input board
     lockPlacement( nextWord, tmpBoard );
-    console.log( tmpBoard );
+
+    //Slot, validate and then lock subsequent word(s)
+    nextWord = getWord( words );
+    if( findPlacementFor( nextWord, tmpBoard ) /* && isValidPlacement( nextWord, tmpBoard ) */ ){
+      lockPlacement( nextWord, tmpBoard );
+    }
+
 
     return tmpBoard;
 
@@ -180,54 +186,55 @@ export default function BoardBuilder(props){
 
   }
 
-  const lockPlacement = ( placedWord: PlacedWord, gameBoard: Board ) => {
+  const findPlacementFor = ( unPlacedWord: PlacedWord, localGameBoard: Board ):boolean =>{
+    const candidateCells = localGameBoard.usedCells.filter( (cell:Cell)=>{
+      return cell.words.length < 2;
+    })
+    let candidateCount = 0;
+    let found = false;
+    do{
+      candidateCount ++;
+      const cellIndex = Math.floor( Math.random() * candidateCells.length );
+      const anchorCell: Cell = candidateCells[ cellIndex ];
+      const cellFoundAt = unPlacedWord.word.indexOf( anchorCell.letter );
+      if( cellFoundAt >= 0 ){
+        const anchorCell = candidateCells[cellFoundAt];
+        console.log( anchorCell );
+        found = true;
+        if( anchorCell.words[0].orientation === Orientation.HORIZONTAL ){
+          unPlacedWord.orientation = Orientation.VERTICAL;
+          unPlacedWord.y = anchorCell.yPos;
+          unPlacedWord.x = anchorCell.xPos - cellFoundAt;
+        } else {
+          unPlacedWord.orientation = Orientation.HORIZONTAL;
+          unPlacedWord.x = anchorCell.xPos;
+          unPlacedWord.y = anchorCell.yPos - cellFoundAt;
+
+        }
+      }
+    }while( candidateCount < 4 && !found )
+    console.log( found, unPlacedWord );
+    return found;
+  }
+
+  const lockPlacement = ( placedWord: PlacedWord, localGameBoard: Board ) => {
 
     const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
     for( let index = 0; index < placedWord.word.length; index++ ){
       //Set the cells, store them in the board and the PlacedWord
       const nextX = placedWord.x + ( crawler[0] * index );
       const nextY = placedWord.y + ( crawler[1] * index );
-      const nextCell = gameBoard.rows[nextX][nextY]
+      const nextCell = localGameBoard.rows[nextX][nextY]
       nextCell.letter = placedWord.word.charAt( index );
       nextCell.words.push( placedWord );
       placedWord.cells.push( nextCell );
     }
+    localGameBoard.placedWords.push( placedWord );
+    localGameBoard.usedCells = [...localGameBoard.usedCells, ...placedWord.cells];//.concat( placedWord.cells );
 
   }
 
-  const setPlacement = ( placedWord:PlacedWord, usedCellsStore:Array<Cell>,  ) =>{
-        const tmpGrid:Board = Object.assign( {}, gameBoard );
-        let curX = placedWord.x;
-        let curY = placedWord.y;
-        if( curX >= 0 && curX < 17 && curY >= 0 && curY < 17 ){
-          let tmpCell = tmpGrid[curX][curY];
-          tmpCell.letter = placedWord.word.charAt( 0 );
-          tmpCell.mine = false;
-          usedCellsStore.push( tmpCell );
-        }
-        for( let curChar = 1; curChar < placedWord.word.length; curChar++ ){
-        
-            if( Orientation.HORIZONTAL === placedWord.orientation ){
-              curX = placedWord.x;
-              curY = placedWord.y + curChar;
-            } else {
-              curX = placedWord.x + curChar;
-              curY = placedWord.y;
-
-            }
-          if( curX >= 0 && curX < GRID_X && curY >= 0 && curY < GRID_Y ){
-            let tmpCell = tmpGrid[curX][curY];
-            tmpCell.letter = placedWord.word.charAt( curChar );
-            tmpCell.mine = false;
-            usedCellsStore.push( tmpCell );
-
-          }
-        }
-        setGameBoard( tmpGrid );
-        setUsedCells( usedCellsStore );
-    
-  }
-  const isValidPlacement = ( placedWord:PlacedWord ) =>{
+  const isValidPlacement = ( placedWord:PlacedWord, localGameBoard: Board ) =>{
     let valid = false;
     console.log( 'validating', placedWord );
     if( (placedWord.orientation === Orientation.HORIZONTAL ||
@@ -292,7 +299,7 @@ export default function BoardBuilder(props){
 
     } while (curX < (GRID_X -1) &&
              curY < (GRID_Y -1) &&
-             ( gameBoard[curX][curY].letter !== '' ||
+             ( gameBoard.rows[curX][curY].letter !== '' ||
                index <= baseWord.length )
              );
 
