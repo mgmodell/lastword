@@ -45,16 +45,33 @@ type Board = {
 export default function BoardBuilder(props){
 
   const GRID_SIZE = 17;
-  const x = GRID_SIZE;
-  const y = GRID_SIZE;
-  
-  const [gameBoard,setGameBoard] = useState<Board>({
-    xMax: 0,
-    yMax: 0,
-    rows: [],
-    placedWords: [],
-    usedCells: [],
-  });
+  const GRID_X = GRID_SIZE;
+  const GRID_Y = GRID_SIZE;
+
+  const genCleanBoard = (): Board =>{
+    return( {
+      xMax: 0,
+      yMax: 0,
+      rows: [],
+      placedWords: [],
+      usedCells: [],
+    });
+  }
+
+  const genNewCell = ( x: number, y: number ): Cell => {
+    return( {
+      xPos: x,
+      yPos: y,
+      mine: false,
+      focused: false,
+      enhancement: Enhancement.NA,
+      letter: ''
+    });
+  }
+
+  const [gameBoard,setGameBoard] = useState<Board>(
+    genCleanBoard( )
+  );
 
   const [baseWords, setBaseWords] = useState([] );
   const [curCell, setCurCell] = useState<Cell>()
@@ -67,27 +84,24 @@ export default function BoardBuilder(props){
     //setPlacedWords( [] );
     //setUsedCells( [] );
     //setGameBoard({})
-    const tmp_grid = [];
+    const newBoard = genCleanBoard( );
+
+    const tmpGrid = [];
 
     for( let x_pos = 0; x_pos < gameBoard.xMax; x_pos ++  ){
-      tmp_grid.push( [] );
+      tmpGrid.push( [] );
       for( let y_pos = 0; y_pos < gameBoard.yMax; y_pos ++  ){
-        const nextCell:Cell = {
-            xPos: x_pos,
-            yPos: y_pos,
-            mine: false,
-            focused: false,
-            enhancement: Enhancement.NA,
-            letter: ''
-          };
-
-        tmp_grid[x_pos].push( nextCell );
+        const nextCell:Cell = genNewCell( x_pos, y_pos );
+        tmpGrid[x_pos].push( nextCell );
 
       }
     }
-    setGameBoard( tmp_grid );
+
+    newBoard.rows = tmpGrid;
+
+    setGameBoard( newBoard );
     if( baseWords.length > 0 ){
-      const builtBoard = buildBoard( x, y, baseWords );
+      const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords );
       setGameBoard( builtBoard );
       //placeWords( );
 
@@ -120,37 +134,32 @@ export default function BoardBuilder(props){
     
   },[])
 
+
   const buildBoard = ( xMax: number, yMax: number, words: Array<String> ): Board=>{
     const boardGrid: Array<Array<Cell>> = [];
 
     for( let x_pos = 0; x_pos < xMax; x_pos ++  ){
       boardGrid.push( [] );
       for( let y_pos = 0; y_pos < yMax; y_pos ++  ){
-        const nextCell: Cell = 
-          {
-            xPos: x_pos,
-            yPos: y_pos,
-            mine: false,
-            focused: false,
-            enhancement: Enhancement.NA,
-            letter: ''
-          };
+        const nextCell: Cell = genNewCell( x_pos, y_pos );
 
         boardGrid[x_pos].push(
           nextCell
         ) 
       }
     }
-    const tmpBoard: Board = {
-      xMax: xMax,
-      yMax: yMax,
-      rows: boardGrid,
-      placedWords: [],
-      usedCells: []
-    }
+    const tmpBoard: Board = genCleanBoard()
+    tmpBoard.xMax = xMax;
+    tmpBoard.yMax = yMax;
+    tmpBoard.rows = boardGrid;
+
     //build 
     //Select and place first word
     let nextWord = getWord( words );
+    nextWord.y = Math.floor( tmpBoard.yMax / 2 );
+    nextWord.x = Math.floor( tmpBoard.xMax / 2 );
+    //The following method mutates the input board
+    lockPlacement( nextWord, tmpBoard );
 
     return tmpBoard;
 
@@ -167,6 +176,17 @@ export default function BoardBuilder(props){
       word: words[ place ],
       place: place
     })
+
+  }
+
+  const lockPlacement = ( placedWord: PlacedWord, gameBoard: Board ) => {
+
+    const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
+    for( let index = 0; index < placedWord.word.length; index++ ){
+      //Set the cells, store them in the board and the PlacedWord
+
+
+    }
 
   }
 
@@ -365,8 +385,10 @@ export default function BoardBuilder(props){
     const x = GRID_SIZE;
     const y = GRID_SIZE;
     
-    if( Object.keys(gameBoard.rows).length < x ){
-      return null;
+    if( gameBoard.rows.length < x ){
+      return (
+        <div className={styles.board}></div>
+      );
     } else {
       const output = [];
       for( let x_pos = 0; x_pos < x; x_pos ++  ){
