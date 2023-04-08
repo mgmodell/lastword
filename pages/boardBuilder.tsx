@@ -79,6 +79,7 @@ export default function BoardBuilder(props){
   );
 
   const [baseWords, setBaseWords] = useState([] );
+  const [pointsForLetter, setPointsForLetter] = useState( {} );
   const [curCell, setCurCell] = useState<Cell>()
 
   const initBoard = () => {
@@ -100,16 +101,24 @@ export default function BoardBuilder(props){
   }
   const fetchWords = ()=>{
     //Now let's get some data
-    const url = 'https://raw.githubusercontent.com/' +
+    const pointsUrl = 'https://raw.githubusercontent.com/' +
+      'mgmodell/corpora/master/data/games/scrabble.json';
+    const wordsUrl = 'https://raw.githubusercontent.com/' +
       'mgmodell/corpora/master/data/words/common.json';
-         //setBaseWords( ['hello', 'goodbye', 'transit', 'traffic', ] );
-         axios.get(url )
-          .then((resp) =>{
-            const words = resp.data.commonWords.filter((word) =>{
-              return word?.length < 9 
-            } );
-            setBaseWords( words );
-          })
+
+     //setBaseWords( ['hello', 'goodbye', 'transit', 'traffic', ] );
+     axios.get(pointsUrl )
+      .then((resp) =>{
+        const mapping = resp.data.letters
+        setPointsForLetter( mapping );
+      })
+     axios.get(wordsUrl )
+      .then((resp) =>{
+        const words = resp.data.commonWords.filter((word) =>{
+          return word?.length < 9 
+        } );
+        setBaseWords( words );
+      })
     
   }
 
@@ -262,6 +271,7 @@ export default function BoardBuilder(props){
         }
       }
       const allConnectedWords = getAllWords( placedWord, localGameBoard );
+      //console.log( 'points:', pointsFor( placedWord, localGameBoard));
       if( allConnectedWords.length > 1 ){
         
         valid = allConnectedWords.reduce( (result, word) => {
@@ -272,6 +282,7 @@ export default function BoardBuilder(props){
     }
     return valid;
   }
+
 
 
   const getAllWords = ( placedWord:PlacedWord, localGameBoard: Board ):Array<string> =>{
