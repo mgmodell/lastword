@@ -26,7 +26,7 @@ type PlacedWord = {
   x: number;
   y: number;
   orientation: Orientation;
-  word: String;
+  word: string;
   place: number;
   cells: Array<Cell>;
 };
@@ -134,7 +134,7 @@ export default function BoardBuilder(props){
   },[])
 
 
-  const buildBoard = ( xMax: number, yMax: number, words: Array<String> ): Board=>{
+  const buildBoard = ( xMax: number, yMax: number, words: Array<string> ): Board=>{
     const boardGrid: Array<Array<Cell>> = [];
 
     for( let x_pos = 0; x_pos < xMax; x_pos ++  ){
@@ -175,7 +175,7 @@ export default function BoardBuilder(props){
 
   }
 
-  const getWord = ( words: Array<String> ):PlacedWord=>{
+  const getWord = ( words: Array<string> ):PlacedWord=>{
     const orientation = Math.floor( Math.random( ) * 2 )  === 1 ? Orientation.HORIZONTAL : Orientation.VERTICAL;
     const place = Math.floor( Math.random( ) * words.length)
 
@@ -253,8 +253,34 @@ export default function BoardBuilder(props){
         }
       }
       valid = true;
+      const allConnectedWords = getAllWords( placedWord, localGameBoard );
     }
     return valid;
+  }
+
+
+  const getAllWords = ( placedWord:PlacedWord, localGameBoard: Board ):Array<string> =>{
+    const foundWords = [ ];
+    const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
+    const firstWord = placedWord.word;
+
+    //Check if the placedWord is complete
+    if( ( placedWord.x - (crawler[1] * 1 ) < 0 || placedWord.y - (crawler[0] * 1) < 0  ||
+          localGameBoard.rows[ placedWord.x - (crawler[1] * 1 )][placedWord.y - (crawler[0] * 1)].letter === '' ) &&
+
+        ( placedWord.x + (crawler[1] * firstWord.length ) >= localGameBoard.xMax || placedWord.y + (crawler[0] * firstWord.length) >= localGameBoard.yMax  ||
+          localGameBoard.rows[ placedWord.x + (crawler[1] * firstWord.length )][placedWord.y + (crawler[0] * firstWord.length)].letter === '' ) ){
+
+      foundWords.push( placedWord.word );
+
+      //Cycle through the letters and check the perpendiculars
+      for( let index = 0; index < firstWord.length; index ++ ){
+
+      }
+    }
+
+    return foundWords;
+    
   }
 
 
