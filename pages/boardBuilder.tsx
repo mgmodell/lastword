@@ -8,10 +8,10 @@ enum Orientation {
 }
 enum Enhancement {
   NA = 'NA',
-  L2 = 'L2',
-  L3 = 'L3',
-  W2 = 'W2',
-  W3 = 'W3'
+  L2 = 'Double Letter Score',
+  L3 = 'Triple Letter Score',
+  W2 = 'Double Word Score',
+  W3 = 'Triple Word Score'
 };
 type Cell = {
   xPos: number;
@@ -397,8 +397,14 @@ export default function BoardBuilder(props){
             case Enhancement.W3:
               classes.push( styles.tripleWord );
               break;
-
+            default:
+              classes.push ( styles.noTip );
           }
+          const toolTip = selCell.enhancement === Enhancement.NA ? null :
+          (
+                <span className={styles.tooltip}>{selCell.enhancement}</span>
+          );
+
           
           output.push(
             <div key={curPos}
@@ -406,7 +412,10 @@ export default function BoardBuilder(props){
               xpos={xPos}
               ypos={yPos}
               onClick={selectCell}
-              >{selCell.letter.length > 0 ? selCell.letter : ' '}</div>
+              >
+                {selCell.letter.length > 0 ? selCell.letter : ' '} 
+                {toolTip}
+              </div>
           )
         }
       }

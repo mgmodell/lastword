@@ -13,6 +13,8 @@
   margin: 3px;
   border-width: thin;
   
+  position: relative;
+  display: inline-block;
 }
 .board > div.irrelevant {
   background-color:rgb(241, 237, 231);
@@ -39,6 +41,11 @@
   background-color: #9b860ed1;
   
 }
+.board > div:hover {
+  border-block-color: #d12715;
+  background-color:blueviolet;
+
+}
 .board > div.mine {
   background-color: #8FF8F8;
   
@@ -47,9 +54,26 @@
   background-color: #8888F8;
 }
 
+.board > div .tooltip {
+  visibility: hidden;
+  width: 120;
+  background-color: rgba(0, 0, 0, 0.25);
+  color: white;
+  font-size: smaller;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+
+  position: absolute;
+  z-index: 1;
+}
+
+.board > div:hover .tooltip {
+  visibility: visible;
+}
+
 .board > div.doubleLetter {
   background-color: #10bd4a7c;
-
 }
 
 .board > div.tripleLetter {
