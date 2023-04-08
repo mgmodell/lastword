@@ -102,7 +102,6 @@ export default function BoardBuilder(props){
     if( baseWords.length > 0 ){
       const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords );
       setGameBoard( builtBoard );
-      //placeWords( );
 
     }
 
@@ -162,9 +161,9 @@ export default function BoardBuilder(props){
 
     //Slot, validate and then lock subsequent word(s)
 
-    for(let wordCount = 1; wordCount < 10 + (Math.random( ) * 150); wordCount++ ){
+    for(let wordCount = 1; wordCount < 750; wordCount++ ){
       nextWord = getWord( words );
-      if( findPlacementFor( nextWord, tmpBoard ) && isValidPlacement( nextWord, tmpBoard ) ){
+      if( findPlacementFor( nextWord, tmpBoard ) && isValidPlacement( nextWord, tmpBoard, words ) ){
         lockPlacement( nextWord, tmpBoard );
       }
 
@@ -211,10 +210,11 @@ export default function BoardBuilder(props){
           unPlacedWord.orientation = Orientation.HORIZONTAL;
           unPlacedWord.x = anchorCell.xPos;
           unPlacedWord.y = anchorCell.yPos - cellFoundAt;
-
         }
       }
-    }while( candidateCount < 4 && !found )
+      //Don't check that one again
+      candidateCells.splice( cellIndex, 1);
+    }while( candidateCells.length > 0 && !found )
     return found;
   }
 
@@ -235,7 +235,7 @@ export default function BoardBuilder(props){
 
   }
 
-  const isValidPlacement = ( placedWord:PlacedWord, localGameBoard: Board ):boolean =>{
+  const isValidPlacement = ( placedWord:PlacedWord, localGameBoard: Board, validWords: Array<string> ):boolean =>{
     let valid = false;
     const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
     const wordLen = placedWord.word.length;
@@ -252,8 +252,14 @@ export default function BoardBuilder(props){
           return valid;
         }
       }
-      valid = true;
       const allConnectedWords = getAllWords( placedWord, localGameBoard );
+      if( allConnectedWords.length > 1 ){
+        
+        valid = allConnectedWords.reduce( (result, word) => {
+          return result && validWords.includes( word );
+
+        }, true);
+      }
     }
     return valid;
   }
@@ -275,6 +281,50 @@ export default function BoardBuilder(props){
 
       //Cycle through the letters and check the perpendiculars
       for( let index = 0; index < firstWord.length; index ++ ){
+        let collectedWord = placedWord.word.charAt( index );
+        //Check behind
+        let offset = 1;
+        let terminated = false;
+        do{
+          const nextX = placedWord.x -
+                        (offset * crawler[1] ) +
+                        (index * crawler[0] );
+          const nextY = placedWord.y -
+                        (offset * crawler[0] ) +
+                        (index * crawler[1] );
+
+
+          if( nextX >= 0 && nextY >= 0 && localGameBoard.rows[nextX][nextY].letter !== ''){
+            const prevChar = localGameBoard.rows[nextX][nextY].letter;
+            collectedWord = `${prevChar}${collectedWord}`;
+          }else{
+            terminated = true;
+          }
+          offset ++;
+        } while( !terminated )
+
+        //Check forward
+        offset = 1;
+        terminated = false;
+        do{
+          const nextX = placedWord.x +
+                        (offset * crawler[1] ) +
+                        (index * crawler[0] );
+          const nextY = placedWord.y +
+                        (offset * crawler[0] ) +
+                        (index * crawler[1] );
+
+          if( nextX < localGameBoard.xMax && nextY < localGameBoard.yMax && localGameBoard.rows[nextX][nextY].letter !== ''){
+            const prevChar = localGameBoard.rows[nextX][nextY].letter;
+            collectedWord = `${collectedWord}${prevChar}`;
+          }else{
+            terminated = true;
+          }
+          offset ++;
+        } while( !terminated )
+        if( collectedWord.length > 1 ){
+          foundWords.push( collectedWord );
+        }
 
       }
     }

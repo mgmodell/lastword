@@ -8,11 +8,11 @@ export default function Home() {
   return (
     <div >
       <Head>
-        <title>Create Next App</title>
+        <title>The Last Word</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <h1>Hello!</h1>
+      <h1>I've got you now!</h1>
         <BoardBuilder />
 
     </div>
