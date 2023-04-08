@@ -129,7 +129,6 @@ export default function BoardBuilder(props){
         const nextCell: Cell = genNewCell( x_pos, y_pos );
         const enhancementGen = Math.floor( 100 * Math.random( ) );
         if( enhancementGen > 90 ){
-          //console.log( 'got one', enhancementGen );
           switch ( enhancementGen ) {
             case 92:
             case 96:
@@ -148,7 +147,6 @@ export default function BoardBuilder(props){
               break;
 
           }
-          console.log( nextCell );
 
         }
 
@@ -386,7 +384,6 @@ export default function BoardBuilder(props){
             classes.push( styles.current );
           }
 
-          console.log( selCell );
           switch( selCell.enhancement ){
             case Enhancement.L2:
               classes.push( styles.doubleLetter );
@@ -409,7 +406,7 @@ export default function BoardBuilder(props){
               xpos={xPos}
               ypos={yPos}
               onClick={selectCell}
-              >{selCell.letter.length > 0 ? selCell.letter : '-'}</div>
+              >{selCell.letter.length > 0 ? selCell.letter : ' '}</div>
           )
         }
       }

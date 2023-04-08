@@ -48,23 +48,23 @@
 }
 
 .board > div.doubleLetter {
-  background-color: #10bd4aed;
+  background-color: #10bd4a7c;
 
 }
 
 .board > div.tripleLetter {
-  background-color: #10bd4a7c;
+  background-color: #10bd4aed;
   color: antiquewhite;
 
 }
 
 .board > div.doubleWord {
-  background-color: #bd1086ed;
+  background-color: #bd10867c;
 
 }
 
 .board > div.tripleWord {
-  background-color: #bd10867c;
+  background-color: #bd1086ed;
   color: antiquewhite;
 
 }
