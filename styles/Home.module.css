@@ -47,6 +47,28 @@
   background-color: #8888F8;
 }
 
+.board > div.doubleLetter {
+  background-color: #10bd4aed;
+
+}
+
+.board > div.tripleLetter {
+  background-color: #10bd4a7c;
+  color: antiquewhite;
+
+}
+
+.board > div.doubleWord {
+  background-color: #bd1086ed;
+
+}
+
+.board > div.tripleWord {
+  background-color: #bd10867c;
+  color: antiquewhite;
+
+}
+
 @keyframes pulse {
   	0% {
 		transform: scale(0.95);

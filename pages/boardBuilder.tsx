@@ -50,7 +50,7 @@ export default function BoardBuilder(props){
   //Height
   const GRID_X = GRID_SIZE;
   //Width
-  const GRID_Y = GRID_SIZE - 2;
+  const GRID_Y = GRID_SIZE;
 
   const genCleanBoard = (): Board =>{
     return( {
@@ -84,19 +84,6 @@ export default function BoardBuilder(props){
   const initBoard = () => {
 
     const newBoard = genCleanBoard( );
-
-    const tmpGrid = [];
-
-    for( let x_pos = 0; x_pos < gameBoard.xMax; x_pos ++  ){
-      tmpGrid.push( [] );
-      for( let y_pos = 0; y_pos < gameBoard.yMax; y_pos ++  ){
-        const nextCell:Cell = genNewCell( x_pos, y_pos );
-        tmpGrid[x_pos].push( nextCell );
-
-      }
-    }
-
-    newBoard.rows = tmpGrid;
 
     setGameBoard( newBoard );
     if( baseWords.length > 0 ){
@@ -140,6 +127,30 @@ export default function BoardBuilder(props){
       boardGrid.push( [] );
       for( let y_pos = 0; y_pos < yMax; y_pos ++  ){
         const nextCell: Cell = genNewCell( x_pos, y_pos );
+        const enhancementGen = Math.floor( 100 * Math.random( ) );
+        if( enhancementGen > 90 ){
+          //console.log( 'got one', enhancementGen );
+          switch ( enhancementGen ) {
+            case 92:
+            case 96:
+              nextCell.enhancement = Enhancement.L3;
+              break;
+            case 93:
+            case 97:
+            case 98:
+              nextCell.enhancement = Enhancement.W2;
+              break;
+            case 94:
+              nextCell.enhancement = Enhancement.W3;
+              break;
+            default:
+              nextCell.enhancement = Enhancement.L2;
+              break;
+
+          }
+          console.log( nextCell );
+
+        }
 
         boardGrid[x_pos].push(
           nextCell
@@ -373,6 +384,23 @@ export default function BoardBuilder(props){
           const classes = [selCell.letter === '' ? styles.irrelevant : styles.relevant];
           if( selCell.focused ){
             classes.push( styles.current );
+          }
+
+          console.log( selCell );
+          switch( selCell.enhancement ){
+            case Enhancement.L2:
+              classes.push( styles.doubleLetter );
+              break;
+            case Enhancement.L3:
+              classes.push( styles.tripleLetter );
+              break;
+            case Enhancement.W2:
+              classes.push( styles.doubleWord );
+              break;
+            case Enhancement.W3:
+              classes.push( styles.tripleWord );
+              break;
+
           }
           
           output.push(
