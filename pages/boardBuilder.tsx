@@ -42,17 +42,19 @@ type PlacedWord = {
 type Board = {
   xMax: number;
   yMax: number;
-  rows: {
-    [key: number]: {
-      [key: number]: Cell;
-    }
-  };
+  rows: Array<Array<Cell>>;
   placedWords: Array<PlacedWord>,
   usedCells: Array<Cell>,
 }
 
+type PointMap = {
+  [key: string] : {
+    points: number,
+    tiles: number
+  }
+}
 
-export default function BoardBuilder(props){
+export default function BoardBuilder(/*props*/){
 
   const GRID_SIZE = 17;
   //Height
@@ -82,12 +84,13 @@ export default function BoardBuilder(props){
     });
   }
 
+  const [cumulativePoints,setCumulativePoints] = useState( 0 );
   const [gameBoard,setGameBoard] = useState<Board>(
     genCleanBoard( )
   );
 
   const [baseWords, setBaseWords] = useState([] );
-  const [pointsForLetter, setPointsForLetter] = useState( {} );
+  const [pointsForLetter, setPointsForLetter] = useState<PointMap>( { } );
   const [curCell, setCurCell] = useState<Cell>()
 
   const initBoard = () => {
@@ -101,7 +104,7 @@ export default function BoardBuilder(props){
 
     }
 
-    const boardBase = document.querySelector(`.${styles.board}`);
+    const boardBase = document.querySelector(`.${styles.board}`) as HTMLElement;
     boardBase?.style.setProperty( 
       'grid-template-columns',
       `repeat( ${GRID_Y} , 1fr )`
@@ -118,7 +121,6 @@ export default function BoardBuilder(props){
      axios.get(pointsUrl )
       .then((resp) =>{
         const mapping = resp.data.letters
-        console.log( mapping['a']['points'], resp.data, mapping );
         setPointsForLetter( mapping );
       })
      axios.get(wordsUrl )
@@ -390,18 +392,19 @@ export default function BoardBuilder(props){
   }
 
 
-  const selectCell = (event) => {
-    const xPos = parseInt( event.target.attributes.xpos.value );
-    const yPos = parseInt( event.target.attributes.ypos.value );
+  const selectCell = (event: MouseEvent<HTMLButtonElement>):void => {
+    const target = event.target as HTMLButtonElement;
+    const xpos = parseInt( target.attributes.xpos.value );
+    const ypos = parseInt( target.attributes.ypos.value );
     const tmpBoard = Object.assign( {}, gameBoard );
     
     if( curCell != undefined ){
       const prevCell = Object.assign({}, curCell);
       prevCell.focused = false;
-      tmpBoard.rows[prevCell.xPos][prevCell.yPos] = prevCell;
+      tmpBoard.rows[prevCell.xpos][prevCell.ypos] = prevCell;
     }
     
-    const newCurCell:Cell = tmpBoard.rows[xPos][yPos];
+    const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
     
     newCurCell.focused = true;
     setGameBoard( tmpBoard );
@@ -453,12 +456,11 @@ export default function BoardBuilder(props){
           );
 
           
-          console.log( selCell.letter, pointsForLetter );
           output.push(
             <div key={curPos}
               className={classes.join(' ')}
-              xpos={xPos}
-              ypos={yPos}
+              xpos={selCell.xPos}
+              ypos={selCell.yPos}
               onClick={selectCell}
               >
                 {selCell.letter.length > 0 ? selCell.letter : ' '} 
@@ -482,10 +484,11 @@ export default function BoardBuilder(props){
 
   return(
     <Fragment>
+      <div className={styles.status}>Thus far you have {cumulativePoints} points.</div>
       <button onClick={initBoard} >Bring the next challenger?</button><br/>
       {gameBoard.rows.length > 0 ? (
         <Fragment>
-          <RandomComponent componentType='name' watchField={gameBoard } classes={styles.challengerName} /> brings his board and roars:<br/>
+          <RandomComponent componentType='name' watchField={gameBoard.placedWords } classes={styles.challengerName} /> brings his board and roars:<br/>
           <RandomComponent componentType='taunt' watchField={gameBoard} classes={styles.taunt}/><br/><br/>
         </Fragment> ) : null }
       {board}
