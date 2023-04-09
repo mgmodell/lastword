@@ -118,6 +118,7 @@ export default function BoardBuilder(props){
      axios.get(pointsUrl )
       .then((resp) =>{
         const mapping = resp.data.letters
+        console.log( mapping['a']['points'], resp.data, mapping );
         setPointsForLetter( mapping );
       })
      axios.get(wordsUrl )
@@ -452,6 +453,7 @@ export default function BoardBuilder(props){
           );
 
           
+          console.log( selCell.letter, pointsForLetter );
           output.push(
             <div key={curPos}
               className={classes.join(' ')}
@@ -461,6 +463,9 @@ export default function BoardBuilder(props){
               >
                 {selCell.letter.length > 0 ? selCell.letter : ' '} 
                 {toolTip}
+                <sub>
+                  {selCell.letter.length > 0 ? pointsForLetter[selCell.letter]['points'] : null }
+                </sub>
               </div>
           )
         }

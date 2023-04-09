@@ -32,6 +32,10 @@
   position: relative;
   display: inline-block;
 }
+
+.board > div > sub {
+  font-size:xx-small;
+}
 .board > div.irrelevant {
   background-color:rgb(241, 237, 231);
   border-color: #ceb150;
