@@ -1,6 +1,14 @@
+/*
+This little game was built to amuse Silly Sloth, my word-game-loving sister,
+on her fiftieth birthday.
+
+The code could be improved and the comments certainly could be, too. However,
+this will work well as the first beta.
+*/
 import React, {useState, useEffect, Fragment, useMemo} from 'react';
 import axios from "axios";
 import styles from '../styles/Home.module.css';
+import RandomComponent from './randomComponent';
 
 enum Orientation {
   HORIZONTAL=1,
@@ -272,7 +280,7 @@ export default function BoardBuilder(props){
       }
       const allConnectedWords = getAllWords( placedWord, localGameBoard );
       //console.log( 'points:', pointsFor( placedWord, localGameBoard));
-      if( allConnectedWords.length > 1 ){
+      if( allConnectedWords.length > 0 ){
         
         valid = allConnectedWords.reduce( (result, word) => {
           return result && validWords.includes( word );
@@ -285,76 +293,95 @@ export default function BoardBuilder(props){
 
 
 
+  //Search the word and all connected perpendiculars for full words (no check for actual word)
   const getAllWords = ( placedWord:PlacedWord, localGameBoard: Board ):Array<string> =>{
     const foundWords = [ ];
     const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
     const firstWord = placedWord.word;
 
-    //Back
-    const backX = placedWord.x - crawler[0];
-    const backY = placedWord.y - crawler[1];
-    //Forward
-    const frontX = placedWord.x + (crawler[0] * firstWord.length);
-    const frontY = placedWord.y + (crawler[1] * firstWord.length);
 
+    //Search behind placedWord
+    let offset = 1;
+    let terminated = false;
+    let collectedWord = placedWord.word;
+    do{
+      const backX = placedWord.x - (crawler[0] * offset );
+      const backY = placedWord.y - (crawler[1] * offset );
 
-    //Check if the placedWord is complete
-    if( ( backX < 0 || backY < 0  ||
-          localGameBoard.rows[ backX ][backY].letter === '' ) &&
-
-        ( frontX >= localGameBoard.xMax ||  frontY >= localGameBoard.yMax  ||
-          localGameBoard.rows[ frontX ][ frontY ].letter === '' ) ){
-
-      foundWords.push( placedWord.word );
-
-      //Cycle through the letters and check the perpendiculars
-      for( let index = 0; index < firstWord.length; index ++ ){
-        let collectedWord = placedWord.word.charAt( index );
-        //Check behind
-        let offset = 1;
-        let terminated = false;
-        do{
-          const nextX = placedWord.x -
-                        (offset * crawler[1] ) +
-                        (index * crawler[0] );
-          const nextY = placedWord.y -
-                        (offset * crawler[0] ) +
-                        (index * crawler[1] );
-
-
-          if( nextX >= 0 && nextY >= 0 && localGameBoard.rows[nextX][nextY].letter !== ''){
-            const prevChar = localGameBoard.rows[nextX][nextY].letter;
-            collectedWord = `${prevChar}${collectedWord}`;
-          }else{
-            terminated = true;
-          }
-          offset ++;
-        } while( !terminated )
-
-        //Check forward
-        offset = 1;
-        terminated = false;
-        do{
-          const nextX = placedWord.x +
-                        (offset * crawler[1] ) +
-                        (index * crawler[0] );
-          const nextY = placedWord.y +
-                        (offset * crawler[0] ) +
-                        (index * crawler[1] );
-
-          if( nextX < localGameBoard.xMax && nextY < localGameBoard.yMax && localGameBoard.rows[nextX][nextY].letter !== ''){
-            const prevChar = localGameBoard.rows[nextX][nextY].letter;
-            collectedWord = `${collectedWord}${prevChar}`;
-          }else{
-            terminated = true;
-          }
-          offset ++;
-        } while( !terminated )
-        if( collectedWord.length > 1 ){
-          foundWords.push( collectedWord );
-        }
-
+      if( ( backX < 0 || backY < 0  || localGameBoard.rows[ backX ][backY].letter === '' ) ){
+        terminated = true;
+      } else {
+        const prevChar = localGameBoard.rows[backX][backY].letter;
+        collectedWord = `${prevChar}${collectedWord}`;
       }
+      offset++;
+    }while( !terminated)
+
+    //Search behind placedWord
+    offset = 2;
+    terminated = false;
+    do{
+      const frontX = placedWord.x + (crawler[0] * offset );
+      const frontY = placedWord.y + (crawler[1] * offset );
+
+      if( ( frontX >= localGameBoard.xMax || frontY >= localGameBoard.yMax  || localGameBoard.rows[ frontX ][frontY].letter === '' ) ){
+        terminated = true;
+      } else {
+        const nextChar = localGameBoard.rows[frontX][frontY].letter;
+        collectedWord = `${collectedWord}${nextChar}`;
+      }
+      offset++;
+    }while( !terminated)
+
+    foundWords.push( collectedWord );
+
+    //Cycle through the letters and check the perpendiculars
+    for( let index = 0; index < firstWord.length; index ++ ){
+      let collectedWord = placedWord.word.charAt( index );
+      //Check behind
+      offset = 1;
+      terminated = false;
+      do{
+        const nextX = placedWord.x -
+                      (offset * crawler[1] ) +
+                      (index * crawler[0] );
+        const nextY = placedWord.y -
+                      (offset * crawler[0] ) +
+                      (index * crawler[1] );
+
+
+        if( nextX >= 0 && nextY >= 0 && localGameBoard.rows[nextX][nextY].letter !== ''){
+          const prevChar = localGameBoard.rows[nextX][nextY].letter;
+          collectedWord = `${prevChar}${collectedWord}`;
+        }else{
+          terminated = true;
+        }
+        offset ++;
+      } while( !terminated )
+
+      //Check forward
+      offset = 1;
+      terminated = false;
+      do{
+        const nextX = placedWord.x +
+                      (offset * crawler[1] ) +
+                      (index * crawler[0] );
+        const nextY = placedWord.y +
+                      (offset * crawler[0] ) +
+                      (index * crawler[1] );
+
+        if( nextX < localGameBoard.xMax && nextY < localGameBoard.yMax && localGameBoard.rows[nextX][nextY].letter !== ''){
+          const prevChar = localGameBoard.rows[nextX][nextY].letter;
+          collectedWord = `${collectedWord}${prevChar}`;
+        }else{
+          terminated = true;
+        }
+        offset ++;
+      } while( !terminated )
+      if( collectedWord.length > 1 ){
+        foundWords.push( collectedWord );
+      }
+
     }
 
     return foundWords;
@@ -439,9 +466,9 @@ export default function BoardBuilder(props){
         }
       }
       return(
-        <div className={styles.board}>
-          {output}
-        </div>
+          <div className={styles.board}>
+            {output}
+          </div>
       )
       
     }
@@ -450,7 +477,12 @@ export default function BoardBuilder(props){
 
   return(
     <Fragment>
-      <button onClick={initBoard} >New Board</button>
+      <button onClick={initBoard} >Bring the next challenger?</button><br/>
+      {gameBoard.rows.length > 0 ? (
+        <Fragment>
+          <RandomComponent componentType='name' watchField={gameBoard } classes={styles.challengerName} /> brings his board and roars:<br/>
+          <RandomComponent componentType='taunt' watchField={gameBoard} classes={styles.taunt}/><br/><br/>
+        </Fragment> ) : null }
       {board}
     </Fragment>
   )

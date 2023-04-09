@@ -4,6 +4,22 @@
   width: 50%;
 }
 
+.challengerName {
+  color: deeppink;
+  font-size: larger;
+}
+
+.taunt {
+  color: deeppink;
+  font-size: x-large;
+}
+.taunt::after {
+  content: '"';
+}
+.taunt::before {
+  content: '"';
+}
+
 .board > div {
   border-radius: 10px;
   width: 30px;

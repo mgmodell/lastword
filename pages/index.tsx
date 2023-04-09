@@ -1,7 +1,7 @@
 import Head from 'next/head'
-import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 import BoardBuilder from './boardBuilder';
+import RandomComponent from './randomComponent';
 
 
 export default function Home() {
@@ -11,8 +11,6 @@ export default function Home() {
         <title>The Last Word</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
-
-      <h1>I've got you now!</h1>
         <BoardBuilder />
 
     </div>
