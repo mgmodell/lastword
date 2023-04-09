@@ -294,8 +294,6 @@ export default function BoardBuilder(/*props*/){
     return valid;
   }
 
-
-
   //Search the word and all connected perpendiculars for full words (no check for actual word)
   const getAllWords = ( placedWord:PlacedWord, localGameBoard: Board ):Array<string> =>{
     const foundWords = [ ];
@@ -391,20 +389,123 @@ export default function BoardBuilder(/*props*/){
     
   }
 
+  //Search the word and all connected perpendiculars for full words (no check for actual word)
+  const scoreWords = ( placedWord:PlacedWord, localGameBoard: Board ):number =>{
+    let score = 0;
 
-  const selectCell = (event: MouseEvent<HTMLButtonElement>):void => {
+    const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
+    const firstWord = placedWord.word;
+
+
+    //Search behind placedWord
+    let offset = 1;
+    let terminated = false;
+    let localScore = 0;
+    do{
+      const backX = placedWord.x - (crawler[0] * offset );
+      const backY = placedWord.y - (crawler[1] * offset );
+
+      if( ( backX < 0 || backY < 0  || localGameBoard.rows[ backX ][backY].letter === '' ) ){
+        terminated = true;
+      } else {
+        const prevChar = localGameBoard.rows[backX][backY];
+        localScore += pointsForLetter[prevChar.letter].points;
+      }
+      offset++;
+    }while( !terminated)
+
+    //Search behind placedWord
+    offset = 2;
+    terminated = false;
+    do{
+      const frontX = placedWord.x + (crawler[0] * offset );
+      const frontY = placedWord.y + (crawler[1] * offset );
+
+      if( ( frontX >= localGameBoard.xMax || frontY >= localGameBoard.yMax  || localGameBoard.rows[ frontX ][frontY].letter === '' ) ){
+        terminated = true;
+      } else {
+        const nextChar = localGameBoard.rows[frontX][frontY];
+        localScore += pointsForLetter[nextChar.letter].points;
+      }
+      offset++;
+    }while( !terminated)
+
+    console.log( 'main word', localScore);
+    score += localScore;
+
+    //Cycle through the letters and check the perpendiculars
+    for( let index = 0; index < firstWord.length; index ++ ){
+      localScore = pointsForLetter[ placedWord.word.charAt(index) ].points;
+
+      //Check behind
+      offset = 1;
+      terminated = false;
+      let wordLength = 1;
+      do{
+        const nextX = placedWord.x -
+                      (offset * crawler[1] ) +
+                      (index * crawler[0] );
+        const nextY = placedWord.y -
+                      (offset * crawler[0] ) +
+                      (index * crawler[1] );
+
+
+        if( nextX >= 0 && nextY >= 0 && localGameBoard.rows[nextX][nextY].letter !== ''){
+          const prevChar = localGameBoard.rows[nextX][nextY].letter;
+          localScore += pointsForLetter[ prevChar ].points; 
+          wordLength ++;
+        }else{
+          terminated = true;
+        }
+        offset ++;
+      } while( !terminated )
+
+      //Check forward
+      offset = 1;
+      terminated = false;
+      do{
+        const nextX = placedWord.x +
+                      (offset * crawler[1] ) +
+                      (index * crawler[0] );
+        const nextY = placedWord.y +
+                      (offset * crawler[0] ) +
+                      (index * crawler[1] );
+
+        if( nextX < localGameBoard.xMax && nextY < localGameBoard.yMax && localGameBoard.rows[nextX][nextY].letter !== ''){
+          const prevChar = localGameBoard.rows[nextX][nextY].letter;
+          localScore += pointsForLetter[ prevChar ].points; 
+          wordLength ++;
+        }else{
+          terminated = true;
+        }
+        offset ++;
+      } while( !terminated )
+      console.log( 'side word', localScore, `(${wordLength})`);
+      if( wordLength > 1 ){
+        score += localScore
+      }
+
+    }
+
+    return score;
+    
+  }
+
+
+  const selectCell = (event: MouseEvent):void => {
     const target = event.target as HTMLButtonElement;
     const xpos = parseInt( target.attributes.xpos.value );
     const ypos = parseInt( target.attributes.ypos.value );
     const tmpBoard = Object.assign( {}, gameBoard );
     
-    if( curCell != undefined ){
-      const prevCell = Object.assign({}, curCell);
-      prevCell.focused = false;
-      tmpBoard.rows[prevCell.xpos][prevCell.ypos] = prevCell;
+    if( curCell !== undefined ){
+      tmpBoard.rows[curCell.xPos][curCell.yPos].focused = false;
     }
-    
+
     const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
+    newCurCell.words.forEach( (placedWord:PlacedWord) =>{
+      console.log( placedWord.word, 'score', scoreWords( placedWord, gameBoard ) );
+    })
     
     newCurCell.focused = true;
     setGameBoard( tmpBoard );

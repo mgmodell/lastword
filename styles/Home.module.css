@@ -34,6 +34,7 @@
 }
 
 .board > div > sub {
+  color: #00000089;
   font-size:xx-small;
 }
 .board > div.irrelevant {
