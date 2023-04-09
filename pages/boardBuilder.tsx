@@ -290,12 +290,20 @@ export default function BoardBuilder(props){
     const crawler = placedWord.orientation == Orientation.HORIZONTAL ? [0,1] : [1,0];
     const firstWord = placedWord.word;
 
-    //Check if the placedWord is complete
-    if( ( placedWord.x - (crawler[1] * 1 ) < 0 || placedWord.y - (crawler[0] * 1) < 0  ||
-          localGameBoard.rows[ placedWord.x - (crawler[1] * 1 )][placedWord.y - (crawler[0] * 1)].letter === '' ) &&
+    //Back
+    const backX = placedWord.x - crawler[0];
+    const backY = placedWord.y - crawler[1];
+    //Forward
+    const frontX = placedWord.x + (crawler[0] * firstWord.length);
+    const frontY = placedWord.y + (crawler[1] * firstWord.length);
 
-        ( placedWord.x + (crawler[1] * firstWord.length ) >= localGameBoard.xMax || placedWord.y + (crawler[0] * firstWord.length) >= localGameBoard.yMax  ||
-          localGameBoard.rows[ placedWord.x + (crawler[1] * firstWord.length )][placedWord.y + (crawler[0] * firstWord.length)].letter === '' ) ){
+
+    //Check if the placedWord is complete
+    if( ( backX < 0 || backY < 0  ||
+          localGameBoard.rows[ backX ][backY].letter === '' ) &&
+
+        ( frontX >= localGameBoard.xMax ||  frontY >= localGameBoard.yMax  ||
+          localGameBoard.rows[ frontX ][ frontY ].letter === '' ) ){
 
       foundWords.push( placedWord.word );
 
