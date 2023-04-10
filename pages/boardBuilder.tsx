@@ -400,7 +400,8 @@ export default function BoardBuilder(/*props*/){
     //Search behind placedWord
     let offset = 1;
     let terminated = false;
-    let localScore = 0;
+    let mainWordScore = 0;
+    let mainModifier = 1;
     do{
       const backX = placedWord.x - (crawler[0] * offset );
       const backY = placedWord.y - (crawler[1] * offset );
@@ -409,7 +410,7 @@ export default function BoardBuilder(/*props*/){
         terminated = true;
       } else {
         const prevChar = localGameBoard.rows[backX][backY];
-        localScore += pointsForLetter[prevChar.letter].points;
+        mainWordScore += pointsForLetter[prevChar.letter].points;
       }
       offset++;
     }while( !terminated)
@@ -425,22 +426,45 @@ export default function BoardBuilder(/*props*/){
         terminated = true;
       } else {
         const nextChar = localGameBoard.rows[frontX][frontY];
-        localScore += pointsForLetter[nextChar.letter].points;
+        mainWordScore += pointsForLetter[nextChar.letter].points;
       }
       offset++;
     }while( !terminated)
 
-    console.log( 'main word', localScore);
-    score += localScore;
 
     //Cycle through the letters and check the perpendiculars
     for( let index = 0; index < firstWord.length; index ++ ){
-      localScore = pointsForLetter[ placedWord.word.charAt(index) ].points;
+      let localScore = 0;
+      let localModifiers = 1;
 
       //Check behind
       offset = 1;
       terminated = false;
       let wordLength = 1;
+      const anchorCell:Cell = localGameBoard.rows[placedWord.x + (index * crawler[0])][placedWord.y + (index * crawler[1])];
+      switch( anchorCell.enhancement ){
+        case Enhancement.L2:
+          localScore += 2 * pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          mainWordScore += 3 * pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          break;
+        case Enhancement.L3:
+          localScore += 3 * pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          mainWordScore += 3 * pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          break;
+        case Enhancement.W2:
+          localModifiers *= 2;
+          localScore += pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          mainWordScore += pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          break;
+        case Enhancement.W3:
+          localModifiers *= 3;
+          localScore += pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          mainWordScore += pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          break;
+        default:
+          localScore += pointsForLetter[ placedWord.word.charAt( index ) ].points;
+          mainWordScore += pointsForLetter[ placedWord.word.charAt( index ) ].points;
+      }
       do{
         const nextX = placedWord.x -
                       (offset * crawler[1] ) +
@@ -480,13 +504,16 @@ export default function BoardBuilder(/*props*/){
         }
         offset ++;
       } while( !terminated )
-      console.log( 'side word', localScore, `(${wordLength})`);
+      console.log( 'side word',  `${localScore} * ${localModifiers}(${wordLength})`);
+      mainModifier *= localModifiers;
       if( wordLength > 1 ){
-        score += localScore
+        score += ( localScore * localModifiers );
       }
+      console.log( 'score:', score );
 
     }
-
+    console.log( 'main word:', mainWordScore, mainModifier );
+    score += ( mainWordScore * mainModifier );
     return score;
     
   }
@@ -499,7 +526,9 @@ export default function BoardBuilder(/*props*/){
     const tmpBoard = Object.assign( {}, gameBoard );
     
     if( curCell !== undefined ){
-      tmpBoard.rows[curCell.xPos][curCell.yPos].focused = false;
+      const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
+      prevCell.focused = false;
+      tmpBoard.rows[curCell.xPos][curCell.yPos] = prevCell;
     }
 
     const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
