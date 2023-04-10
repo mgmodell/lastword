@@ -9,6 +9,7 @@ import React, {useState, useEffect, Fragment, useMemo} from 'react';
 import axios from "axios";
 import styles from '../styles/Home.module.css';
 import RandomComponent from './randomComponent';
+import { RandomName, RandomTaunt } from './api/RandomGenerators';
 
 enum Orientation {
   HORIZONTAL=1,
@@ -85,6 +86,10 @@ export default function BoardBuilder(/*props*/){
   }
 
   const [cumulativePoints,setCumulativePoints] = useState( 0 );
+  const [challengerName, setChallengerName] = useState( 'CHALLENGER' );
+  const [challengerTaunt, setChallengerTaunt] = useState( 'CHALLENGER TAUNT' );
+  const [challengerScore, setChallengerScore] = useState( 0 );
+  const [yourScore, setYourScore] = useState( 0 );
   const [gameBoard,setGameBoard] = useState<Board>(
     genCleanBoard( )
   );
@@ -134,10 +139,16 @@ export default function BoardBuilder(/*props*/){
   }
 
   useEffect( ()=>{
+    RandomTaunt( setChallengerTaunt );
+
+  },[gameBoard]);
+
+  useEffect( ()=>{
     fetchWords( );
     initBoard( );
+    RandomName( setChallengerName );
     
-  },[])
+  },[]);
 
 
   const buildBoard = ( xMax: number, yMax: number, words: Array<string> ): Board=>{
@@ -197,9 +208,39 @@ export default function BoardBuilder(/*props*/){
       }
 
     }
+    // Identify a word to remove and then remove it
+    const wordToRemove = bestCandidate( tmpBoard );
+    const removedWordScore = scoreWords( wordToRemove, tmpBoard );
+    const baseScore = 99 + Math.floor( Math.random( ) * 400 );
+    setYourScore( baseScore );
+    setChallengerScore( baseScore + removedWordScore - 1 );
 
+    //removeWordFromBoard( wordToRemove, tmpBoard );
 
     return tmpBoard;
+
+  }
+
+  const bestCandidate = ( localBoard: Board ):PlacedWord => {
+    //Which ones will actually work
+    const candidates = localBoard.placedWords.filter( (candidate:PlacedWord)=>{
+      const removableCells = candidate.cells.filter( (cell:Cell) =>{ return cell.words.length > 1; } );
+      return removableCells.length < 7
+    });
+
+    //Select 4 and score them
+    const placedWords : Array<PlacedWord> = [];
+    for( let index = 0; index < 4; index++ ){
+      const slot = Math.floor( Math.random() * candidates.length );
+      placedWords.push( candidates[ slot ] );
+      candidates.splice( slot, 1 );
+    }
+    //Return the candidate with the highest point value
+    return placedWords.sort((a:PlacedWord, b: PlacedWord) =>{
+
+      return scoreWords( b, localBoard ) - scoreWords( a, localBoard );
+
+    } )[0];
 
   }
 
@@ -630,10 +671,17 @@ export default function BoardBuilder(/*props*/){
     <Fragment>
       <div className={styles.status}>Thus far you have {cumulativePoints} points.</div>
       <button onClick={initBoard} >Bring the next challenger?</button><br/>
+      <div>
+        {challengerName} : {challengerScore}<br/>
+      </div>
+      <div>
+      You: {yourScore}<br/>
+      </div>
       {gameBoard.rows.length > 0 ? (
         <Fragment>
-          <RandomComponent componentType='name' watchField={gameBoard.placedWords } classes={styles.challengerName} /> brings his board and roars:<br/>
-          <RandomComponent componentType='taunt' watchField={gameBoard} classes={styles.taunt}/><br/><br/>
+          {challengerName} brings his board and roars:<br/>
+          <span className={styles.taunt }>{challengerTaunt}</span><br/><br/>
+          
         </Fragment> ) : null }
       {board}
     </Fragment>
