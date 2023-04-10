@@ -45,6 +45,7 @@ type Board = {
   rows: Array<Array<Cell>>;
   placedWords: Array<PlacedWord>,
   usedCells: Array<Cell>,
+  removedWord: PlacedWord,
 }
 
 type PointMap = {
@@ -208,15 +209,45 @@ export default function BoardBuilder(/*props*/){
 
     }
     // Identify a word to remove and then remove it
-    const wordToRemove = bestCandidate( tmpBoard );
-    const removedWordScore = scoreWords( wordToRemove, tmpBoard );
+    const removedWordScore = removeAWord( tmpBoard );
+    //Score the words
     const baseScore = 99 + Math.floor( Math.random( ) * 400 );
     setYourScore( baseScore );
     setChallengerScore( baseScore + removedWordScore - 1 );
 
-    //removeWordFromBoard( wordToRemove, tmpBoard );
-
     return tmpBoard;
+
+  }
+
+  // Packaged up this code to make it a bit more concise
+  const removeAWord = ( tmpBoard: Board ):number =>{
+    const localBoard = Object.assign( {}, tmpBoard );
+    const wordToRemove = bestCandidate( localBoard );
+    const removedWordScore = scoreWords( wordToRemove, localBoard );
+    const baseScore = 99 + Math.floor( Math.random( ) * 400 );
+    //setYourScore( baseScore );
+    //setChallengerScore( baseScore + removedWordScore - 1 );
+
+    removeWordFromBoard( wordToRemove, localBoard );
+    console.log( localBoard );
+    //setGameBoard( localBoard );
+    return removedWordScore;
+
+  }
+
+  const removeWordFromBoard = ( wordToRemove:PlacedWord, localBoard: Board )=>{
+
+    wordToRemove.cells.forEach( (cell:Cell)=>{
+      if( cell.words.length > 1 ){
+        cell.words.splice( cell.words.indexOf( wordToRemove ), 1 );
+      } else {
+        cell.words = [];
+        cell.letter = '';
+      }
+      localBoard.rows[cell.xPos][cell.yPos] = cell;
+    })
+    localBoard.removedWord = wordToRemove;
+    localBoard.placedWords.splice( localBoard.placedWords.indexOf( wordToRemove ), 1 );
 
   }
 
