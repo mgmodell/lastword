@@ -60,12 +60,12 @@
   border-block-color: #d12715;
   animation: pulse 1s infinite;
   background-color: #9b860ed1;
-  
 }
+
 .board > div:hover {
   border-block-color: #d12715;
   background-color:blueviolet;
-
+  z-index: +10;
 }
 .board > div.mine {
   background-color: #8FF8F8;

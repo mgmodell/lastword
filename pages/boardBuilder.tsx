@@ -282,7 +282,6 @@ export default function BoardBuilder(/*props*/){
         }
       }
       const allConnectedWords = getAllWords( placedWord, localGameBoard );
-      //console.log( 'points:', pointsFor( placedWord, localGameBoard));
       if( allConnectedWords.length > 0 ){
         
         valid = allConnectedWords.reduce( (result, word) => {
@@ -319,7 +318,7 @@ export default function BoardBuilder(/*props*/){
     }while( !terminated)
 
     //Search behind placedWord
-    offset = 2;
+    offset = 1;
     terminated = false;
     do{
       const frontX = placedWord.x + (crawler[0] * offset );
@@ -333,6 +332,10 @@ export default function BoardBuilder(/*props*/){
       }
       offset++;
     }while( !terminated)
+    if( placedWord.word === collectedWord ){
+      //console.log( placedWord, collectedWord );
+
+    }
 
     foundWords.push( collectedWord );
 
@@ -416,7 +419,7 @@ export default function BoardBuilder(/*props*/){
     }while( !terminated)
 
     //Search behind placedWord
-    offset = 2;
+    offset = 1;
     terminated = false;
     do{
       const frontX = placedWord.x + (crawler[0] * offset );
@@ -430,6 +433,7 @@ export default function BoardBuilder(/*props*/){
       }
       offset++;
     }while( !terminated)
+    //console.log( 'exterior main: ', mainWordScore );
 
 
     //Cycle through the letters and check the perpendiculars
@@ -504,15 +508,15 @@ export default function BoardBuilder(/*props*/){
         }
         offset ++;
       } while( !terminated )
-      console.log( 'side word',  `${localScore} * ${localModifiers}(${wordLength})`);
+      //console.log( 'side word',  `${localScore} * ${localModifiers}(${wordLength})`);
       mainModifier *= localModifiers;
       if( wordLength > 1 ){
         score += ( localScore * localModifiers );
       }
-      console.log( 'score:', score );
+      //console.log( 'score:', score );
 
     }
-    console.log( 'main word:', mainWordScore, mainModifier );
+    //console.log( 'main word:', mainWordScore, mainModifier );
     score += ( mainWordScore * mainModifier );
     return score;
     
@@ -532,9 +536,11 @@ export default function BoardBuilder(/*props*/){
     }
 
     const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
+    /*
     newCurCell.words.forEach( (placedWord:PlacedWord) =>{
       console.log( placedWord.word, 'score', scoreWords( placedWord, gameBoard ) );
     })
+    */
     
     newCurCell.focused = true;
     setGameBoard( tmpBoard );
@@ -582,7 +588,12 @@ export default function BoardBuilder(/*props*/){
           }
           const toolTip = selCell.enhancement === Enhancement.NA ? null :
           (
-                <span className={styles.tooltip}>{selCell.enhancement}</span>
+                <span className={styles.tooltip}
+                  xpos={selCell.xPos}
+                  ypos={selCell.yPos}
+                >
+                  {selCell.enhancement}
+                </span>
           );
 
           
@@ -595,7 +606,10 @@ export default function BoardBuilder(/*props*/){
               >
                 {selCell.letter.length > 0 ? selCell.letter : ' '} 
                 {toolTip}
-                <sub>
+                <sub
+                  xpos={selCell.xPos}
+                  ypos={selCell.yPos}
+                >
                   {selCell.letter.length > 0 ? pointsForLetter[selCell.letter]['points'] : null }
                 </sub>
               </div>
