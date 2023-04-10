@@ -8,7 +8,6 @@ this will work well as the first beta.
 import React, {useState, useEffect, Fragment, useMemo} from 'react';
 import axios from "axios";
 import styles from '../styles/Home.module.css';
-import RandomComponent from './randomComponent';
 import { RandomName, RandomTaunt } from './api/RandomGenerators';
 
 enum Orientation {
@@ -680,7 +679,7 @@ export default function BoardBuilder(/*props*/){
       {gameBoard.rows.length > 0 ? (
         <Fragment>
           {challengerName} brings his board and roars:<br/>
-          <span className={styles.taunt }>{challengerTaunt}</span><br/><br/>
+          <span onClick={()=> RandomTaunt(setChallengerTaunt)} className={styles.taunt }>{challengerTaunt}</span><br/><br/>
           
         </Fragment> ) : null }
       {board}
