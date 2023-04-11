@@ -45,7 +45,7 @@ type Board = {
   rows: Array<Array<Cell>>;
   placedWords: Array<PlacedWord>,
   usedCells: Array<Cell>,
-  removedWord: PlacedWord,
+  removedWord: PlacedWord | null,
 }
 
 type PointMap = {
@@ -70,6 +70,7 @@ export default function BoardBuilder(/*props*/){
       rows: [],
       placedWords: [],
       usedCells: [],
+      removedWord: null,
     });
   }
 
@@ -90,13 +91,16 @@ export default function BoardBuilder(/*props*/){
   const [challengerTaunt, setChallengerTaunt] = useState( 'CHALLENGER TAUNT' );
   const [challengerScore, setChallengerScore] = useState( 0 );
   const [yourScore, setYourScore] = useState( 0 );
+
   const [gameBoard,setGameBoard] = useState<Board>(
     genCleanBoard( )
   );
 
   const [baseWords, setBaseWords] = useState([] );
   const [pointsForLetter, setPointsForLetter] = useState<PointMap>( { } );
+
   const [curCell, setCurCell] = useState<Cell>()
+  const [enteringRight, setEnteringRight] = useState( true );
 
   const initBoard = () => {
 
@@ -607,6 +611,11 @@ export default function BoardBuilder(/*props*/){
     }
 
     const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
+    if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
+      setEnteringRight( true );
+    } else {
+      setEnteringRight( !enteringRight );
+    }
     /*
     newCurCell.words.forEach( (placedWord:PlacedWord) =>{
       console.log( placedWord.word, 'score', scoreWords( placedWord, gameBoard ) );
@@ -657,6 +666,15 @@ export default function BoardBuilder(/*props*/){
             default:
               classes.push ( styles.noTip );
           }
+
+          if( selCell.focused ){
+            if( enteringRight ){
+              classes.push( styles.arrowRight );
+            } else {
+              classes.push( styles.arrowDown );
+            }
+
+          }
           const toolTip = selCell.enhancement === Enhancement.NA ? null :
           (
                 <span className={styles.tooltip}
@@ -675,14 +693,23 @@ export default function BoardBuilder(/*props*/){
               ypos={selCell.yPos}
               onClick={selectCell}
               >
-                {selCell.letter.length > 0 ? selCell.letter : ' '} 
-                {toolTip}
+                <span
+                  xpos={selCell.xPos}
+                  ypos={selCell.yPos}
+                >
+                  {selCell.letter.length > 0 ? selCell.letter : ' '} 
+                </span>
                 <sub
                   xpos={selCell.xPos}
                   ypos={selCell.yPos}
                 >
                   {selCell.letter.length > 0 ? pointsForLetter[selCell.letter]['points'] : null }
                 </sub>
+                {toolTip}
+                <span className={styles.arrow}
+                  xpos={selCell.xPos}
+                  ypos={selCell.yPos}
+                ></span>
               </div>
           )
         }
@@ -695,7 +722,7 @@ export default function BoardBuilder(/*props*/){
       
     }
     
-  }, [gameBoard] );
+  }, [gameBoard,enteringRight] );
 
   return(
     <Fragment>
@@ -709,8 +736,6 @@ export default function BoardBuilder(/*props*/){
       </div>
       {gameBoard.rows.length > 0 ? (
         <Fragment>
-          {challengerName} brings his board and roars:<br/>
-          <span onClick={()=> RandomTaunt(setChallengerTaunt)} className={styles.taunt }>{challengerTaunt}</span><br/><br/>
           
         </Fragment> ) : null }
       {board}

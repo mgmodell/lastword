@@ -48,19 +48,12 @@
   border-color: #50ce6f;
   
 }
-.board > div.horizontal {
-  background-color: #8888F8;
-  
-}
-.board > div.vertical {
-  background-color: #F888F8;
-  
-}
 .board > div.current {
   border-block-color: #d12715;
   animation: pulse 1s infinite;
   background-color: #9b860ed1;
 }
+
 
 .board > div:hover {
   border-block-color: #d12715;
@@ -129,4 +122,79 @@
 		transform: scale(0.95);
 		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
 	}
+}
+
+div.arrowLeft {
+  /*
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  */
+  transform: translate(-50%,-50%);
+  transform: rotate(90deg);
+}
+div.arrowRight {
+  /*
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  */
+  transform: translate(-50%,-50%);
+  transform: rotate(90deg);
+}
+span.arrow {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  display: block;
+  width: 1.5vw;
+  height: 1.5vw;
+  border-bottom: 5px solid rgba(192, 153, 153, 0.60);
+  border-right: 5px solid rgb(192, 153, 153, 0.60);
+  margin: 5px;
+  visibility: hidden;
+}
+.arrowRight span.arrow {
+  transform: rotate(-45deg);
+  animation: rightArrow 2s infinite;
+  visibility: visible;
+
+}
+@keyframes rightArrow {
+  0% {
+      opacity: 0;
+      transform: rotate(-45deg) translate(-15px, -20px);
+  }
+  50% {
+      opacity: 1;
+      transform: rotate(-45deg) translate(-2px, -5px);
+  }
+  100% {
+      opacity: 0;
+      transform: rotate(-45deg) translate(20px, 15px);
+  }
+}
+.arrowDown span.arrow {
+  transform: rotate(45deg);
+  animation: downArrow 2s infinite;
+  visibility: visible;
+
+}
+span.arrow:nth-child(2) {
+  animation-delay: -0.2s;
+}
+
+@keyframes downArrow {
+  0% {
+      opacity: 0;
+      transform: rotate(45deg) translate(-15px, -20px);
+  }
+  50% {
+      opacity: 1;
+      transform: rotate(45deg) translate(-2px, -5px);
+  }
+  100% {
+      opacity: 0;
+      transform: rotate(45deg) translate(20px, 15px);
+  }
 }
