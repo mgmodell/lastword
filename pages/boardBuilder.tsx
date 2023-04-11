@@ -99,8 +99,9 @@ export default function BoardBuilder(/*props*/){
   const [baseWords, setBaseWords] = useState([] );
   const [pointsForLetter, setPointsForLetter] = useState<PointMap>( { } );
 
-  const [curCell, setCurCell] = useState<Cell>()
+  const [curCell, setCurCell] = useState<Cell | null>()
   const [enteringRight, setEnteringRight] = useState( true );
+  const [yourChars, setYourChars] = useState<Array<Cell>>( [] );
 
   const initBoard = () => {
 
@@ -148,6 +149,8 @@ export default function BoardBuilder(/*props*/){
   },[gameBoard]);
 
   useEffect( ()=>{
+    document.onkeyup = (event)=>keyboardInput(event);
+
     fetchWords( );
     initBoard( );
     RandomName( setChallengerName );
@@ -598,6 +601,23 @@ export default function BoardBuilder(/*props*/){
   }
 
 
+  //Let's handle the keyboard input
+  const keyboardInput = (event: KeyboardEvent):void => {
+    const tmpBoard = Object.assign( {}, gameBoard );
+    console.log( event, curCell );
+    if( curCell?.focused ){
+      const tmpCurCell = Object.assign( {}, curCell );
+      tmpCurCell.letter = event.key
+      tmpBoard.rows[curCell.xPos][curCell.yPos] = tmpCurCell;
+      const tmpYourChars = [...yourChars];
+      tmpYourChars.push( tmpCurCell );
+
+      setCurCell( tmpCurCell );
+      setYourChars( tmpYourChars );
+      setGameBoard( tmpBoard );
+    }
+  }
+
   const selectCell = (event: MouseEvent):void => {
     const target = event.target as HTMLButtonElement;
     const xpos = parseInt( target.attributes.xpos.value );
@@ -622,9 +642,14 @@ export default function BoardBuilder(/*props*/){
     })
     */
     
-    newCurCell.focused = true;
+    if( newCurCell.letter === '' ){
+      newCurCell.focused = true;
+      setCurCell( newCurCell );
+    } else {
+      setCurCell( null );
+    }
     setGameBoard( tmpBoard );
-    setCurCell( newCurCell );
+    //setCurCell( newCurCell );
     
   }
 
@@ -715,7 +740,8 @@ export default function BoardBuilder(/*props*/){
         }
       }
       return(
-          <div className={styles.board}>
+          <div className={styles.board}
+            >
             {output}
           </div>
       )
