@@ -5,7 +5,7 @@ on her fiftieth birthday.
 The code could be improved and the comments certainly could be, too. However,
 this will work well as the first beta.
 */
-import React, {useState, useEffect, Fragment, useMemo} from 'react';
+import React, {useState, useEffect, Fragment, useMemo, KeyboardEventHandler} from 'react';
 import axios from "axios";
 import styles from '../styles/Home.module.css';
 import { RandomName, RandomTaunt } from './api/RandomGenerators';
@@ -57,6 +57,8 @@ type PointMap = {
 
 export default function BoardBuilder(/*props*/){
 
+
+
   const GRID_SIZE = 17;
   //Height
   const GRID_X = GRID_SIZE;
@@ -99,7 +101,7 @@ export default function BoardBuilder(/*props*/){
   const [baseWords, setBaseWords] = useState([] );
   const [pointsForLetter, setPointsForLetter] = useState<PointMap>( { } );
 
-  const [curCell, setCurCell] = useState<Cell | null>()
+  const [curCell, setCurCell] = useState<Cell | null>(null)
   const [enteringRight, setEnteringRight] = useState( true );
   const [yourChars, setYourChars] = useState<Array<Cell>>( [] );
 
@@ -148,8 +150,12 @@ export default function BoardBuilder(/*props*/){
 
   },[gameBoard]);
 
-  useEffect( ()=>{
+  // Thanks to https://stackoverflow.com/questions/73453969/keyup-event-listeners-not-using-the-updated-states-in-react
+  useEffect( () =>{
     document.onkeyup = (event)=>keyboardInput(event);
+  }, [curCell]);
+
+  useEffect( ()=>{
 
     fetchWords( );
     initBoard( );
@@ -601,18 +607,30 @@ export default function BoardBuilder(/*props*/){
   }
 
 
+  const doThing = () => {
+    console.log( 'hello' );
+    console.log( gameBoard );
+  }
   //Let's handle the keyboard input
-  const keyboardInput = (event: KeyboardEvent):void => {
-    const tmpBoard = Object.assign( {}, gameBoard );
-    console.log( event, curCell );
-    if( curCell?.focused ){
-      const tmpCurCell = Object.assign( {}, curCell );
-      tmpCurCell.letter = event.key
-      tmpBoard.rows[curCell.xPos][curCell.yPos] = tmpCurCell;
-      const tmpYourChars = [...yourChars];
-      tmpYourChars.push( tmpCurCell );
+  const keyboardInput = (event: KeyboardEvent<HTMLDivElement>) => {
 
-      setCurCell( tmpCurCell );
+    doThing( );
+
+    console.log( gameBoard, curCell );
+
+    const tmpBoard = Object.assign( {}, gameBoard );
+    const outputCell : Cell = Object.assign( {}, curCell );
+    console.log( tmpBoard );
+    console.log( event );
+    console.log( outputCell );
+
+    if( !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
+      outputCell.letter = event.key
+      tmpBoard.rows[outputCell.xPos][outputCell.yPos] = outputCell;
+      const tmpYourChars = [...yourChars];
+      tmpYourChars.push( outputCell );
+
+      setCurCell( outputCell );
       setYourChars( tmpYourChars );
       setGameBoard( tmpBoard );
     }
@@ -624,13 +642,14 @@ export default function BoardBuilder(/*props*/){
     const ypos = parseInt( target.attributes.ypos.value );
     const tmpBoard = Object.assign( {}, gameBoard );
     
-    if( curCell !== undefined ){
+    if( curCell !== null ){
       const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
       prevCell.focused = false;
       tmpBoard.rows[curCell.xPos][curCell.yPos] = prevCell;
     }
 
     const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
+    console.log( 'curCell', newCurCell );
     if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
       setEnteringRight( true );
     } else {
@@ -646,7 +665,7 @@ export default function BoardBuilder(/*props*/){
       newCurCell.focused = true;
       setCurCell( newCurCell );
     } else {
-      setCurCell( null );
+      newCurCell.focused = true;
     }
     setGameBoard( tmpBoard );
     //setCurCell( newCurCell );
@@ -741,6 +760,7 @@ export default function BoardBuilder(/*props*/){
       }
       return(
           <div className={styles.board}
+            //onKeyUp={keyboardInput }
             >
             {output}
           </div>
