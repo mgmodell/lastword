@@ -607,30 +607,43 @@ export default function BoardBuilder(/*props*/){
   }
 
 
-  const doThing = () => {
-    console.log( 'hello' );
-    console.log( gameBoard );
-  }
   //Let's handle the keyboard input
   const keyboardInput = (event: KeyboardEvent<HTMLDivElement>) => {
 
-    doThing( );
-
-    console.log( gameBoard, curCell );
-
     const tmpBoard = Object.assign( {}, gameBoard );
     const outputCell : Cell = Object.assign( {}, curCell );
-    console.log( tmpBoard );
-    console.log( event );
-    console.log( outputCell );
 
     if( !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
-      outputCell.letter = event.key
+      const crawler = enteringRight ? [0,1] : [1,0];
+      outputCell.letter = event.key;
+      outputCell.mine = true;
       tmpBoard.rows[outputCell.xPos][outputCell.yPos] = outputCell;
       const tmpYourChars = [...yourChars];
       tmpYourChars.push( outputCell );
 
-      setCurCell( outputCell );
+      let nextDetermined = false;
+      let index = 1;
+      do{
+        const nextX = outputCell.xPos + ( index * crawler[0] );
+        const nextY = outputCell.yPos + ( index * crawler[1] );
+        if( nextX < tmpBoard.xMax && nextY < tmpBoard.yMax ){
+
+          const nextCell = tmpBoard.rows[nextX][nextY];
+          if( nextCell.letter === '' ){
+            outputCell.focused = false;
+            nextCell.focused = true;
+            nextDetermined = true;
+            setCurCell( nextCell );
+          }
+          index ++;
+        } else {
+          outputCell.focused = false;
+          setCurCell( null );
+          nextDetermined = true;
+        }
+      } while ( !nextDetermined );
+
+
       setYourChars( tmpYourChars );
       setGameBoard( tmpBoard );
     }
