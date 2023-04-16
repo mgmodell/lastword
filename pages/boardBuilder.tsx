@@ -706,6 +706,9 @@ export default function BoardBuilder(/*props*/){
           if( selCell.focused ){
             classes.push( styles.current );
           }
+          if( selCell.mine ){
+            classes.push( styles.mine );
+          }
 
           switch( selCell.enhancement ){
             case Enhancement.L2:
