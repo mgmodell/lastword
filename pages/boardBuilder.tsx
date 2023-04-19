@@ -26,6 +26,7 @@ type Cell = {
   yPos: number;
   mine: boolean;
   focused: boolean;
+  scored: boolean;
   enhancement: Enhancement;
   letter: string;
   words: Array<PlacedWord>;
@@ -46,6 +47,8 @@ type Board = {
   placedWords: Array<PlacedWord>,
   usedCells: Array<Cell>,
   removedWord: PlacedWord | null,
+  letterSet: string,
+  lettersLeft: string
 }
 
 type PointMap = {
@@ -73,6 +76,8 @@ export default function BoardBuilder(/*props*/){
       placedWords: [],
       usedCells: [],
       removedWord: null,
+      letterSet: '',
+      lettersLeft: ''
     });
   }
 
@@ -82,6 +87,7 @@ export default function BoardBuilder(/*props*/){
       yPos: y,
       mine: false,
       focused: false,
+      scored: false,
       enhancement: Enhancement.NA,
       letter: '',
       words: [],
@@ -107,6 +113,7 @@ export default function BoardBuilder(/*props*/){
 
   const initBoard = () => {
 
+    RandomName( setChallengerName );
     const newBoard = genCleanBoard( );
 
     setGameBoard( newBoard );
@@ -156,7 +163,6 @@ export default function BoardBuilder(/*props*/){
   }, [curCell]);
 
   useEffect( ()=>{
-
     fetchWords( );
     initBoard( );
     RandomName( setChallengerName );
@@ -242,7 +248,6 @@ export default function BoardBuilder(/*props*/){
     //setChallengerScore( baseScore + removedWordScore - 1 );
 
     removeWordFromBoard( wordToRemove, localBoard );
-    console.log( localBoard );
     //setGameBoard( localBoard );
     return removedWordScore;
 
@@ -262,6 +267,12 @@ export default function BoardBuilder(/*props*/){
     localBoard.removedWord = wordToRemove;
     localBoard.placedWords.splice( localBoard.placedWords.indexOf( wordToRemove ), 1 );
 
+  }
+
+  const getUniqueCells = ( placedWord: PlacedWord ):Array<Cell> => {
+    return placedWord.cells.filter( (cell:Cell) =>{
+      return cell.words.length <= 1;
+    })
   }
 
   const bestCandidate = ( localBoard: Board ):PlacedWord => {
@@ -401,8 +412,8 @@ export default function BoardBuilder(/*props*/){
       offset++;
     }while( !terminated)
 
-    //Search behind placedWord
-    offset = 1;
+    //Search in front of placedWord
+    offset = placedWord.word.length;
     terminated = false;
     do{
       const frontX = placedWord.x + (crawler[0] * offset );
@@ -416,11 +427,7 @@ export default function BoardBuilder(/*props*/){
       }
       offset++;
     }while( !terminated)
-    if( placedWord.word === collectedWord ){
-      //console.log( placedWord, collectedWord );
-
-    }
-
+    
     foundWords.push( collectedWord );
 
     //Cycle through the letters and check the perpendiculars
@@ -472,8 +479,100 @@ export default function BoardBuilder(/*props*/){
 
     }
 
+
     return foundWords;
     
+  }
+
+  // Convenience method
+  const scoreIt = ()=>{
+    console.log( scorePlacedLetters( yourChars[0], gameBoard ) );
+  }
+
+  //Search for all the new and augmented words and score them
+  const scorePlacedLetters = (startCell:Cell, localGameBoard: Board):number =>{
+    let score = 0;
+    const crawler = enteringRight ? [0,1] : [1,0];
+
+    //Check each cell
+    let mainWordScore = 0;
+    let mainWord = '';
+    let mainModifier = 1;
+    let wordList = [];
+    let mainOffset = 0;
+    let notMine = 0;
+
+    //Search backwards on main word
+    let terminated = false;
+    let cell = startCell;
+    do{
+      mainOffset ++;
+      const backX = cell.xPos - (crawler[0] * mainOffset)
+      const backY = cell.yPos - (crawler[1] * mainOffset)
+
+      if( (backX < 0 || backY < 0 || localGameBoard.rows[ backX ][backY].letter === '' ) ){
+        terminated = true;
+      } else {
+        notMine++;
+        const prevChar = localGameBoard.rows[backX][backY];
+        mainWordScore += pointsForLetter[prevChar.letter].points;
+        mainWord = `${prevChar.letter}${mainWord}`;
+        prevChar.scored = true;
+      }
+    }while( !terminated );
+
+    //Crawl forward
+    mainOffset = 0;
+    terminated = false
+    do{
+      const frontX = startCell.xPos + (crawler[0] * mainOffset)
+      const frontY = startCell.yPos + (crawler[1] * mainOffset)
+      if( frontX < localGameBoard.xMax && frontY < localGameBoard.yMax ){
+        cell = Object.assign({}, localGameBoard.rows[frontX][frontY] );
+        if( cell.mine ){
+          switch( cell.enhancement ){
+            case Enhancement.L3:
+              mainWordScore += ( 3 * pointsForLetter[ cell.letter ].points );
+              break;
+            case Enhancement.L2:
+              mainWordScore += ( 2 * pointsForLetter[ cell.letter ].points );
+              break;
+            case Enhancement.W2:
+              mainWordScore += pointsForLetter[ cell.letter ].points;
+              mainModifier *= 2;
+              break;
+            case Enhancement.W3:
+              mainWordScore += pointsForLetter[ cell.letter ].points;
+              mainModifier *= 3;
+              break;
+            default:
+              mainWordScore += pointsForLetter[ cell.letter ].points;
+          }
+          // Get perpendicular word
+        } else if( cell.letter !== '' ) {
+          notMine++;
+          mainWordScore += pointsForLetter[cell.letter].points;
+        } else {
+          terminated = true;
+        }
+      } else {
+        terminated = true;
+      }
+      //Add current letter
+      if( !terminated ) {
+        localGameBoard.rows[frontX][frontY] = cell;
+        cell.scored = true;
+        mainWord = `${mainWord}${cell.letter}`;
+      }
+
+      mainOffset++;
+    }while( !terminated )
+    
+    setGameBoard( localGameBoard );
+    console.log( mainWord );
+    score += mainWordScore * mainModifier;
+    console.log( score );
+    return score;
   }
 
   //Search the word and all connected perpendiculars for full words (no check for actual word)
@@ -517,7 +616,6 @@ export default function BoardBuilder(/*props*/){
       }
       offset++;
     }while( !terminated)
-    //console.log( 'exterior main: ', mainWordScore );
 
 
     //Cycle through the letters and check the perpendiculars
@@ -592,15 +690,12 @@ export default function BoardBuilder(/*props*/){
         }
         offset ++;
       } while( !terminated )
-      //console.log( 'side word',  `${localScore} * ${localModifiers}(${wordLength})`);
       mainModifier *= localModifiers;
       if( wordLength > 1 ){
         score += ( localScore * localModifiers );
       }
-      //console.log( 'score:', score );
 
     }
-    //console.log( 'main word:', mainWordScore, mainModifier );
     score += ( mainWordScore * mainModifier );
     return score;
     
@@ -613,7 +708,11 @@ export default function BoardBuilder(/*props*/){
     const tmpBoard = Object.assign( {}, gameBoard );
     const outputCell : Cell = Object.assign( {}, curCell );
 
-    if( !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
+    //Capture the backspace and simply cancel the current word
+    //Maybe improve this with delete previous character later
+    if( event.keyCode === 8 ){
+      cancelCurrentWord( );
+    } else if( event.key.length === 1 && !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
       const crawler = enteringRight ? [0,1] : [1,0];
       outputCell.letter = event.key;
       outputCell.mine = true;
@@ -649,12 +748,26 @@ export default function BoardBuilder(/*props*/){
     }
   }
 
+  //Cancel the word the player is creating.
+  const cancelCurrentWord = () =>{
+    const tmpBoard = Object.assign( {}, gameBoard );
+    yourChars.forEach( (cell:Cell )=>{
+      tmpBoard.rows[cell.xPos][cell.yPos].mine = false;
+      tmpBoard.rows[cell.xPos][cell.yPos].letter = '';
+    });
+    setYourChars( [] );
+    setGameBoard( tmpBoard );
+  }
+
   const selectCell = (event: MouseEvent):void => {
     const target = event.target as HTMLButtonElement;
     const xpos = parseInt( target.attributes.xpos.value );
     const ypos = parseInt( target.attributes.ypos.value );
     const tmpBoard = Object.assign( {}, gameBoard );
     
+    if( yourChars.length >= 1 ){
+      cancelCurrentWord( );
+    }
     if( curCell !== null ){
       const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
       prevCell.focused = false;
@@ -662,7 +775,6 @@ export default function BoardBuilder(/*props*/){
     }
 
     const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
-    console.log( 'curCell', newCurCell );
     if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
       setEnteringRight( true );
     } else {
@@ -670,7 +782,7 @@ export default function BoardBuilder(/*props*/){
     }
     /*
     newCurCell.words.forEach( (placedWord:PlacedWord) =>{
-      console.log( placedWord.word, 'score', scoreWords( placedWord, gameBoard ) );
+      console.log( placedWord.word, 'words', getAllWords( placedWord, gameBoard ) );
     })
     */
     
@@ -725,6 +837,9 @@ export default function BoardBuilder(/*props*/){
               break;
             default:
               classes.push ( styles.noTip );
+          }
+          if( selCell.scored ){
+            classes.push( styles.scored );
           }
 
           if( selCell.focused ){
@@ -790,14 +905,15 @@ export default function BoardBuilder(/*props*/){
     <Fragment>
       <div className={styles.status}>Thus far you have {cumulativePoints} points.</div>
       <button onClick={initBoard} >Bring the next challenger?</button><br/>
-      <div>
-        {challengerName} : {challengerScore}<br/>
-      </div>
-      <div>
-      You: {yourScore}<br/>
-      </div>
       {gameBoard.rows.length > 0 ? (
         <Fragment>
+        <button disabled={yourChars.length < 1} onClick={scoreIt} >Score it!</button>
+        <div>
+          {challengerName} : {challengerScore}<br/>
+        </div>
+        <div>
+        You: {yourScore}<br/>
+        </div>
           
         </Fragment> ) : null }
       {board}

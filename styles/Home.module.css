@@ -64,6 +64,10 @@
   background-color: #8FF8F8;
   
 }
+.board > div.scored {
+  background-color: black;
+  color: wheat;
+}
 .board > div.first {
   background-color: #8888F8;
 }
