@@ -530,23 +530,31 @@ export default function BoardBuilder(/*props*/){
       if( frontX < localGameBoard.xMax && frontY < localGameBoard.yMax ){
         cell = Object.assign({}, localGameBoard.rows[frontX][frontY] );
         if( cell.mine ){
+          let perpWord = cell.letter;
+          let perpWordScore = 0;
+          let perpWordModifiers = 1;
           switch( cell.enhancement ){
             case Enhancement.L3:
               mainWordScore += ( 3 * pointsForLetter[ cell.letter ].points );
+              perpWordScore += ( 3 * pointsForLetter[ cell.letter ].points );
               break;
             case Enhancement.L2:
               mainWordScore += ( 2 * pointsForLetter[ cell.letter ].points );
+              perpWordScore += ( 2 * pointsForLetter[ cell.letter ].points );
               break;
             case Enhancement.W2:
               mainWordScore += pointsForLetter[ cell.letter ].points;
+              perpWordScore += pointsForLetter[ cell.letter ].points;
               mainModifier *= 2;
               break;
             case Enhancement.W3:
               mainWordScore += pointsForLetter[ cell.letter ].points;
+              perpWordScore += pointsForLetter[ cell.letter ].points;
               mainModifier *= 3;
               break;
             default:
               mainWordScore += pointsForLetter[ cell.letter ].points;
+              perpWordScore += pointsForLetter[ cell.letter ].points;
           }
           // Get perpendicular word
         } else if( cell.letter !== '' ) {
@@ -572,7 +580,7 @@ export default function BoardBuilder(/*props*/){
     console.log( mainWord );
     score += mainWordScore * mainModifier;
     console.log( score );
-    return score;
+    return notMine < 1 ? 0 : score;
   }
 
   //Search the word and all connected perpendiculars for full words (no check for actual word)
