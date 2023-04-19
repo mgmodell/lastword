@@ -486,13 +486,14 @@ export default function BoardBuilder(/*props*/){
 
   // Convenience method
   const scoreIt = ()=>{
-    console.log( scorePlacedLetters( yourChars[0], gameBoard ) );
+    console.log( scorePlacedLetters( yourChars, gameBoard ) );
   }
 
   //Search for all the new and augmented words and score them
-  const scorePlacedLetters = (startCell:Cell, localGameBoard: Board):number =>{
+  const scorePlacedLetters = (placedCells:Array<Cell>, localGameBoard: Board):number =>{
     let score = 0;
     const crawler = enteringRight ? [0,1] : [1,0];
+    const firstWord = placedCells[0];
 
     //Check each cell
     let mainWordScore = 0;
@@ -504,7 +505,7 @@ export default function BoardBuilder(/*props*/){
 
     //Search backwards on main word
     let terminated = false;
-    let cell = startCell;
+    let cell = firstWord;
     do{
       mainOffset ++;
       const backX = cell.xPos - (crawler[0] * mainOffset)
@@ -525,11 +526,11 @@ export default function BoardBuilder(/*props*/){
     mainOffset = 0;
     terminated = false
     do{
-      const frontX = startCell.xPos + (crawler[0] * mainOffset)
-      const frontY = startCell.yPos + (crawler[1] * mainOffset)
+      const frontX = firstWord.xPos + (crawler[0] * mainOffset)
+      const frontY = firstWord.yPos + (crawler[1] * mainOffset)
       if( frontX < localGameBoard.xMax && frontY < localGameBoard.yMax ){
-        cell = Object.assign({}, localGameBoard.rows[frontX][frontY] );
-        if( cell.mine ){
+        cell =  localGameBoard.rows[frontX][frontY];
+        if( cell.mine && placedCells.indexOf( cell ) >= 0 ){
           let perpWord = cell.letter;
           let perpWordScore = 0;
           let perpWordModifiers = 1;
@@ -568,7 +569,7 @@ export default function BoardBuilder(/*props*/){
       }
       //Add current letter
       if( !terminated ) {
-        localGameBoard.rows[frontX][frontY] = cell;
+        localGameBoard.rows[frontX][frontY] = Object.assign({}, cell);
         cell.scored = true;
         mainWord = `${mainWord}${cell.letter}`;
       }
@@ -718,9 +719,7 @@ export default function BoardBuilder(/*props*/){
 
     //Capture the backspace and simply cancel the current word
     //Maybe improve this with delete previous character later
-    if( event.keyCode === 8 ){
-      cancelCurrentWord( );
-    } else if( event.key.length === 1 && !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
+    if( event.key.length === 1 && !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
       const crawler = enteringRight ? [0,1] : [1,0];
       outputCell.letter = event.key;
       outputCell.mine = true;
@@ -753,6 +752,13 @@ export default function BoardBuilder(/*props*/){
 
       setYourChars( tmpYourChars );
       setGameBoard( tmpBoard );
+    } else if( yourChars.length > 0 ){
+      if( [ 13 ].indexOf( event.keyCode ) >= 0 ){
+        scoreIt( );
+      } else if ( [8,27].indexOf( event.keyCode ) >= 0 ){
+        cancelCurrentWord( );
+      }
+
     }
   }
 
