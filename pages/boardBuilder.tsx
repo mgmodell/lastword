@@ -466,8 +466,8 @@ export default function BoardBuilder(/*props*/){
                       (index * crawler[1] );
 
         if( nextX < localGameBoard.xMax && nextY < localGameBoard.yMax && localGameBoard.rows[nextX][nextY].letter !== ''){
-          const prevChar = localGameBoard.rows[nextX][nextY].letter;
-          collectedWord = `${collectedWord}${prevChar}`;
+          const nextChar = localGameBoard.rows[nextX][nextY].letter;
+          collectedWord = `${collectedWord}${nextChar}`;
         }else{
           terminated = true;
         }
@@ -486,11 +486,11 @@ export default function BoardBuilder(/*props*/){
 
   // Convenience method
   const scoreIt = ()=>{
-    console.log( scorePlacedLetters( yourChars, gameBoard ) );
+    console.log( scorePlacedLetters( yourChars, gameBoard, baseWords ) );
   }
 
   //Search for all the new and augmented words and score them
-  const scorePlacedLetters = (placedCells:Array<Cell>, localGameBoard: Board):number =>{
+  const scorePlacedLetters = (placedCells:Array<Cell>, localGameBoard: Board, validWords: Array<string> ):number =>{
     let score = 0;
     const crawler = enteringRight ? [0,1] : [1,0];
     const firstWord = placedCells[0];
@@ -547,17 +547,56 @@ export default function BoardBuilder(/*props*/){
               mainWordScore += pointsForLetter[ cell.letter ].points;
               perpWordScore += pointsForLetter[ cell.letter ].points;
               mainModifier *= 2;
+              perpWordModifiers *= 2;
               break;
             case Enhancement.W3:
               mainWordScore += pointsForLetter[ cell.letter ].points;
               perpWordScore += pointsForLetter[ cell.letter ].points;
               mainModifier *= 3;
+              perpWordModifiers *= 3;
               break;
             default:
               mainWordScore += pointsForLetter[ cell.letter ].points;
               perpWordScore += pointsForLetter[ cell.letter ].points;
           }
           // Get perpendicular word
+          // Check behind
+          let perpOffset = 1;
+          let perpTerminated = false;
+          do{
+            const nextX = cell.xPos - ( perpOffset * crawler[1] );
+            const nextY = cell.yPos - ( perpOffset * crawler[0] );
+            if( nextX >= 0 && nextY >= 0 && localGameBoard.rows[nextX][nextY].letter !== '' ){
+              const prevChar = localGameBoard.rows[nextX][nextY].letter;
+              perpWord = `${prevChar}${perpWord}`
+              perpWordScore += pointsForLetter[ prevChar ].points;
+            } else{
+              perpTerminated = true;
+            }
+            perpOffset++;
+          }while( !perpTerminated )
+
+          //Check forward
+          perpOffset = 1;
+          perpTerminated = false;
+          do{
+            const nextX = cell.xPos + ( perpOffset * crawler[1] );
+            const nextY = cell.yPos + ( perpOffset * crawler[0] );
+            if( nextX < localGameBoard.xMax && nextY < localGameBoard.yMax && localGameBoard.rows[nextX][nextY].letter !== '' ){
+              const nextChar = localGameBoard.rows[nextX][nextY].letter;
+              perpWord = `${perpWord}${nextChar}`;
+              perpWordScore += pointsForLetter[ nextChar ].points;
+            } else {
+              perpTerminated = true;
+            }
+            perpOffset++;
+          } while( !perpTerminated )
+
+          if( perpWord.length > 1 ){
+            wordList.push( perpWord );
+            score += perpWordScore;
+          }
+
         } else if( cell.letter !== '' ) {
           notMine++;
           mainWordScore += pointsForLetter[cell.letter].points;
@@ -579,9 +618,17 @@ export default function BoardBuilder(/*props*/){
     
     setGameBoard( localGameBoard );
     console.log( mainWord );
+    if( mainWord.length > 1 ){
+      wordList.push( mainWord );
+    }
     score += mainWordScore * mainModifier;
-    console.log( score );
-    return notMine < 1 ? 0 : score;
+    console.log( score, wordList );
+    const valid = wordList.reduce( (result, word) => {
+      console.log( word, validWords.includes( word ) );
+      return result && validWords.includes( word );
+    }, true );
+
+    return  valid && ( wordList.length > 0 ) &&( notMine >= 1 ) ? score : 0;
   }
 
   //Search the word and all connected perpendiculars for full words (no check for actual word)
