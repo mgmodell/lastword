@@ -5,7 +5,7 @@ on her fiftieth birthday.
 The code could be improved and the comments certainly could be, too. However,
 this will work well as the first beta.
 */
-import React, {useState, useEffect, Fragment, useMemo, KeyboardEventHandler} from 'react';
+import React, {useState, useEffect, Fragment, useMemo, KeyboardEvent} from 'react';
 import axios from "axios";
 import styles from '../styles/Home.module.css';
 import { RandomName, RandomTaunt } from './api/RandomGenerators';
@@ -167,7 +167,8 @@ export default function BoardBuilder(/*props*/){
 
   // Thanks to https://stackoverflow.com/questions/73453969/keyup-event-listeners-not-using-the-updated-states-in-react
   useEffect( () =>{
-    document.onkeyup = (event)=>keyboardInput(event);
+    document.addEventListener( 'keyup', keyboardInput );
+    //document.onkeyup = (event)=>keyboardInput(event);
   }, [curCell]);
 
   useEffect( ()=>{
@@ -803,9 +804,9 @@ export default function BoardBuilder(/*props*/){
     
   }
 
-
   //Let's handle the keyboard input
-  const keyboardInput = (event: KeyboardEvent<HTMLDivElement>) => {
+  const keyboardInput = (event_in: any) => {
+    const event = event_in as KeyboardEvent;
 
     if( !gameBoard.gameScored ){
       const tmpBoard = Object.assign( {}, gameBoard );
@@ -870,36 +871,43 @@ export default function BoardBuilder(/*props*/){
     setGameBoard( tmpBoard );
   }
 
-  const selectCell = (event: MouseEvent):void => {
-    if( !gameBoard.gameScored ){
-      const target = event.target as HTMLButtonElement;
-      const xpos = parseInt( target.attributes.xpos.value );
-      const ypos = parseInt( target.attributes.ypos.value );
-      const tmpBoard = Object.assign( {}, gameBoard );
-    
-      if( yourChars.length >= 1 ){
-        cancelCurrentWord( );
-      }
-      if( curCell !== null ){
-        const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
-        prevCell.focused = false;
-        tmpBoard.rows[curCell.xPos][curCell.yPos] = prevCell;
-      }
+  const selectCell = (event_in: any):void => {
+    const event = event_in as MouseEvent;
 
-      const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
-      if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
-        setEnteringRight( true );
-      } else {
-        setEnteringRight( !enteringRight );
-      }
+    if( event !== null && !gameBoard.gameScored ){
+      const target = event.target as HTMLElement;
+      //console.log( event, target, target.attributes['data-xpos'].value  );
+      const xDat = target.attributes.getNamedItem( 'data-xpos' );
+      const yDat = target.attributes.getNamedItem( 'data-ypos' );
+      if( xDat !== null && yDat !== null ){
+        const xpos = parseInt( xDat.value );
+        const ypos = parseInt( yDat.value );
+        const tmpBoard = Object.assign( {}, gameBoard );
     
-      if( newCurCell.letter === '' ){
-        newCurCell.focused = true;
-        setCurCell( newCurCell );
-      } else {
-        newCurCell.focused = true;
+        if( yourChars.length >= 1 ){
+          cancelCurrentWord( );
+        }
+        if( curCell !== null ){
+          const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
+          prevCell.focused = false;
+          tmpBoard.rows[curCell.xPos][curCell.yPos] = prevCell;
+        }
+
+        const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
+        if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
+          setEnteringRight( true );
+        } else {
+          setEnteringRight( !enteringRight );
+        }
+    
+        if( newCurCell.letter === '' ){
+          newCurCell.focused = true;
+          setCurCell( newCurCell );
+        } else {
+          newCurCell.focused = true;
+        }
+        setGameBoard( tmpBoard );
       }
-      setGameBoard( tmpBoard );
 
     }
     
@@ -961,8 +969,8 @@ export default function BoardBuilder(/*props*/){
           const toolTip = selCell.enhancement === Enhancement.NA ? null :
           (
                 <span className={styles.tooltip}
-                  xpos={selCell.xPos}
-                  ypos={selCell.yPos}
+                  data-xpos={selCell.xPos}
+                  data-ypos={selCell.yPos}
                 >
                   {selCell.enhancement}
                 </span>
@@ -972,26 +980,26 @@ export default function BoardBuilder(/*props*/){
           output.push(
             <div key={curPos}
               className={classes.join(' ')}
-              xpos={selCell.xPos}
-              ypos={selCell.yPos}
+              data-xpos={selCell.xPos}
+              data-ypos={selCell.yPos}
               onClick={selectCell}
               >
                 <span
-                  xpos={selCell.xPos}
-                  ypos={selCell.yPos}
+                  data-xpos={selCell.xPos}
+                  data-ypos={selCell.yPos}
                 >
                   {selCell.letter.length > 0 ? selCell.letter : ' '} 
                 </span>
                 <sub
-                  xpos={selCell.xPos}
-                  ypos={selCell.yPos}
+                  data-xpos={selCell.xPos}
+                  data-ypos={selCell.yPos}
                 >
                   {selCell.letter.length > 0 ? pointsForLetter[selCell.letter]['points'] : null }
                 </sub>
                 {toolTip}
                 <span className={styles.arrow}
-                  xpos={selCell.xPos}
-                  ypos={selCell.yPos}
+                  data-xpos={selCell.xPos}
+                  data-ypos={selCell.yPos}
                 ></span>
               </div>
           )
