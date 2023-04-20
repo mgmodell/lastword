@@ -128,6 +128,7 @@ export default function BoardBuilder(/*props*/){
     setGameBoard( newBoard );
     if( baseWords.length > 0 ){
       const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords.filter( (word:string) => word.length < 10 ) );
+      console.log( builtBoard.lettersLeft );
       setGameBoard( builtBoard );
 
     }

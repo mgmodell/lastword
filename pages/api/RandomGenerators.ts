@@ -10,13 +10,13 @@ interface RandomContentCallback {
   (name: string): void;
 }
 
-export function RandomName(callback: RandomContentCallback): string {
+export function RandomName(callback: RandomContentCallback) {
   axios.get(NAME_URL).then(resp => {
     const receivedName = resp.data._sResult;
     callback(receivedName);
   });
 }
-export function RandomTaunt(callback: RandomContentCallback): string {
+export function RandomTaunt(callback: RandomContentCallback) {
   axios.get(TAUNT_URL).then(resp => {
     const receivedTant = resp.data._sResult;
     callback(receivedTant);
