@@ -10,10 +10,11 @@ import axios from "axios";
 import styles from '../styles/Home.module.css';
 import { RandomName, RandomTaunt } from './api/RandomGenerators';
 
+const CHARS = 'abcdefghijklmnopqrstuvwxwz';
 enum Orientation {
   HORIZONTAL=1,
   VERTICAL=2
-}
+};
 enum Enhancement {
   NA = 'NA',
   L2 = 'Double Letter Score',
@@ -48,7 +49,11 @@ type Board = {
   usedCells: Array<Cell>,
   removedWord: PlacedWord | null,
   letterSet: string,
-  lettersLeft: string
+  lettersLeft: string,
+
+  challengerScore: number,
+  yourScore: number,
+  scored: boolean,
 }
 
 type PointMap = {
@@ -77,7 +82,11 @@ export default function BoardBuilder(/*props*/){
       usedCells: [],
       removedWord: null,
       letterSet: '',
-      lettersLeft: ''
+      lettersLeft: '',
+
+      challengerScore: 0,
+      yourScore: 0,
+      scored: false,
     });
   }
 
@@ -113,12 +122,13 @@ export default function BoardBuilder(/*props*/){
 
   const initBoard = () => {
 
-    RandomName( setChallengerName );
+    RandomName( setChallengerName )
     const newBoard = genCleanBoard( );
 
     setGameBoard( newBoard );
     if( baseWords.length > 0 ){
       const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords.filter( (word:string) => word.length < 10 ) );
+      console.log( builtBoard.lettersLeft );
       setGameBoard( builtBoard );
 
     }
@@ -246,6 +256,8 @@ export default function BoardBuilder(/*props*/){
     //setChallengerScore( baseScore + removedWordScore - 1 );
 
     removeWordFromBoard( wordToRemove, localBoard );
+    tmpBoard.lettersLeft = localBoard.lettersLeft;
+    tmpBoard.letterSet = localBoard.letterSet;
     //setGameBoard( localBoard );
     return removedWordScore;
 
@@ -263,6 +275,18 @@ export default function BoardBuilder(/*props*/){
       localBoard.rows[cell.xPos][cell.yPos] = cell;
     })
     localBoard.removedWord = wordToRemove;
+    let letters = '';
+    wordToRemove.cells.forEach( (cell: Cell) => {
+      if( cell.words.length < 2 ){
+        letters = `${letters}${cell.letter}`;
+      }
+    } )
+    while( letters.length < 9 ){
+      letters += CHARS.charAt( Math.floor( CHARS.length * Math.random( ) ) );
+    }
+    localBoard.letterSet = letters;
+    localBoard.lettersLeft = letters;
+    console.log( wordToRemove, letters );
     localBoard.placedWords.splice( localBoard.placedWords.indexOf( wordToRemove ), 1 );
 
   }
@@ -486,7 +510,12 @@ export default function BoardBuilder(/*props*/){
 
   // Convenience method
   const scoreIt = ()=>{
-    console.log( scorePlacedLetters( yourChars, gameBoard, baseWords, true ) );
+    const localBoard = Object.assign( {}, gameBoard );
+    const wordScore =  scorePlacedLetters( yourChars, localBoard, baseWords, true ) ;
+    const newScore = yourScore + wordScore;
+    setYourScore( newScore );
+    setCumulativePoints( cumulativePoints + (yourScore - challengerScore) )
+
   }
 
   //Search for all the new and augmented words and score them
@@ -518,7 +547,7 @@ export default function BoardBuilder(/*props*/){
         const prevChar = localGameBoard.rows[backX][backY];
         mainWordScore += pointsForLetter[prevChar.letter].points;
         mainWord = `${prevChar.letter}${mainWord}`;
-        prevChar.scored = true;
+        prevChar.scored = markScored;
       }
     }while( !terminated );
 
@@ -617,14 +646,11 @@ export default function BoardBuilder(/*props*/){
     }while( !terminated )
     
     setGameBoard( localGameBoard );
-    console.log( mainWord );
     if( mainWord.length > 1 ){
       wordList.push( mainWord );
     }
     score += mainWordScore * mainModifier;
-    console.log( score, wordList );
     const valid = wordList.reduce( (result, word) => {
-      console.log( word, validWords.includes( word ) );
       return result && validWords.includes( word );
     }, true );
 
@@ -766,9 +792,10 @@ export default function BoardBuilder(/*props*/){
 
     //Capture the backspace and simply cancel the current word
     //Maybe improve this with delete previous character later
-    if( event.key.length === 1 && !!event.key.match(/[a-z]/i) && outputCell !== null && outputCell.focused ){
+    if( event.key.length === 1 && tmpBoard.lettersLeft.match( event.key ) && outputCell !== null && outputCell.focused ){
       const crawler = enteringRight ? [0,1] : [1,0];
       outputCell.letter = event.key;
+      tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( event.key, '' );
       outputCell.mine = true;
       tmpBoard.rows[outputCell.xPos][outputCell.yPos] = outputCell;
       const tmpYourChars = [...yourChars];
@@ -817,6 +844,7 @@ export default function BoardBuilder(/*props*/){
       tmpBoard.rows[cell.xPos][cell.yPos].letter = '';
     });
     setYourChars( [] );
+    tmpBoard.lettersLeft = tmpBoard.letterSet;
     setGameBoard( tmpBoard );
   }
 
@@ -973,7 +1001,7 @@ export default function BoardBuilder(/*props*/){
           {challengerName} : {challengerScore}<br/>
         </div>
         <div>
-        You: {yourScore}<br/>
+        You: {yourScore}&nbsp; Your letters: {gameBoard.lettersLeft} <br/>
         </div>
           
         </Fragment> ) : null }
