@@ -118,7 +118,7 @@ export default function BoardBuilder(/*props*/){
 
     setGameBoard( newBoard );
     if( baseWords.length > 0 ){
-      const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords );
+      const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords.filter( (word:string) => word.length < 10 ) );
       setGameBoard( builtBoard );
 
     }
@@ -144,7 +144,7 @@ export default function BoardBuilder(/*props*/){
       })
      axios.get(wordsUrl )
       .then((resp) =>{
-        setBaseWords( resp.data );
+        setBaseWords( resp.data.filter( (word:string) => word.length) );
 
       })
     
@@ -239,7 +239,7 @@ export default function BoardBuilder(/*props*/){
   // Packaged up this code to make it a bit more concise
   const removeAWord = ( tmpBoard: Board ):number =>{
     const localBoard = Object.assign( {}, tmpBoard );
-    const wordToRemove = bestCandidate( localBoard );
+    const wordToRemove = bestCandidate( localBoard, baseWords );
     const removedWordScore = scoreWords( wordToRemove, localBoard );
     const baseScore = 99 + Math.floor( Math.random( ) * 400 );
     //setYourScore( baseScore );
@@ -273,7 +273,7 @@ export default function BoardBuilder(/*props*/){
     })
   }
 
-  const bestCandidate = ( localBoard: Board ):PlacedWord => {
+  const bestCandidate = ( localBoard: Board, validWords: Array<string> ):PlacedWord => {
     //Which ones will actually work
     const candidates = localBoard.placedWords.filter( (candidate:PlacedWord)=>{
       const removableCells = candidate.cells.filter( (cell:Cell) =>{ return cell.words.length > 1; } );
@@ -289,8 +289,10 @@ export default function BoardBuilder(/*props*/){
     }
     //Return the candidate with the highest point value
     return placedWords.sort((a:PlacedWord, b: PlacedWord) =>{
+      const aCells = a.cells.filter( (cell:Cell) => { return cell.words.length < 2});
+      const bCells = b.cells.filter( (cell:Cell) => { return cell.words.length < 2});
 
-      return scoreWords( b, localBoard ) - scoreWords( a, localBoard );
+      return scorePlacedLetters( bCells, localBoard, validWords ) - scorePlacedLetters( aCells, localBoard, validWords );
 
     } )[0];
 
@@ -484,11 +486,11 @@ export default function BoardBuilder(/*props*/){
 
   // Convenience method
   const scoreIt = ()=>{
-    console.log( scorePlacedLetters( yourChars, gameBoard, baseWords ) );
+    console.log( scorePlacedLetters( yourChars, gameBoard, baseWords, true ) );
   }
 
   //Search for all the new and augmented words and score them
-  const scorePlacedLetters = (placedCells:Array<Cell>, localGameBoard: Board, validWords: Array<string> ):number =>{
+  const scorePlacedLetters = (placedCells:Array<Cell>, localGameBoard: Board, validWords: Array<string>, markScored: boolean = false ):number =>{
     let score = 0;
     const crawler = enteringRight ? [0,1] : [1,0];
     const firstWord = placedCells[0];
@@ -607,7 +609,7 @@ export default function BoardBuilder(/*props*/){
       //Add current letter
       if( !terminated ) {
         localGameBoard.rows[frontX][frontY] = Object.assign({}, cell);
-        cell.scored = true;
+        cell.scored = markScored;
         mainWord = `${mainWord}${cell.letter}`;
       }
 
