@@ -133,10 +133,10 @@ export default function BoardBuilder(/*props*/){
     //Now let's get some data
     const pointsUrl = 'https://raw.githubusercontent.com/' +
       'mgmodell/corpora/master/data/games/scrabble.json';
-    const wordsUrl = 'https://raw.githubusercontent.com/' +
-      'mgmodell/corpora/master/data/words/common.json';
 
-     //setBaseWords( ['hello', 'goodbye', 'transit', 'traffic', ] );
+     // pulled locally from https://github.com/benjamincrom/scrabble
+     const wordsUrl = 'dictionary.json';
+
      axios.get(pointsUrl )
       .then((resp) =>{
         const mapping = resp.data.letters
@@ -144,10 +144,8 @@ export default function BoardBuilder(/*props*/){
       })
      axios.get(wordsUrl )
       .then((resp) =>{
-        const words = resp.data.commonWords.filter((word) =>{
-          return word?.length < 9 
-        } );
-        setBaseWords( words );
+        setBaseWords( resp.data );
+
       })
     
   }
