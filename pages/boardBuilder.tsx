@@ -53,7 +53,7 @@ type Board = {
 
   challengerScore: number,
   yourScore: number,
-  scored: boolean,
+  gameScored: boolean,
 }
 
 type PointMap = {
@@ -86,7 +86,7 @@ export default function BoardBuilder(/*props*/){
 
       challengerScore: 0,
       yourScore: 0,
-      scored: false,
+      gameScored: false,
     });
   }
 
@@ -106,8 +106,8 @@ export default function BoardBuilder(/*props*/){
   const [cumulativePoints,setCumulativePoints] = useState( 0 );
   const [challengerName, setChallengerName] = useState( 'CHALLENGER' );
   const [challengerTaunt, setChallengerTaunt] = useState( 'CHALLENGER TAUNT' );
-  const [challengerScore, setChallengerScore] = useState( 0 );
-  const [yourScore, setYourScore] = useState( 0 );
+  //const [challengerScore, setChallengerScore] = useState( 0 );
+  //const [yourScore, setYourScore] = useState( 0 );
 
   const [gameBoard,setGameBoard] = useState<Board>(
     genCleanBoard( )
@@ -128,7 +128,6 @@ export default function BoardBuilder(/*props*/){
     setGameBoard( newBoard );
     if( baseWords.length > 0 ){
       const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords.filter( (word:string) => word.length < 10 ) );
-      console.log( builtBoard.lettersLeft );
       setGameBoard( builtBoard );
 
     }
@@ -239,8 +238,10 @@ export default function BoardBuilder(/*props*/){
     const removedWordScore = removeAWord( tmpBoard );
     //Score the words
     const baseScore = 99 + Math.floor( Math.random( ) * 400 );
-    setYourScore( baseScore );
-    setChallengerScore( baseScore + removedWordScore - 1 );
+    tmpBoard.yourScore =  baseScore;
+    tmpBoard.challengerScore = baseScore + removedWordScore - 1;
+
+    shuffleLetters( );
 
     return tmpBoard;
 
@@ -265,22 +266,18 @@ export default function BoardBuilder(/*props*/){
 
   const removeWordFromBoard = ( wordToRemove:PlacedWord, localBoard: Board )=>{
 
+    let letters = '';
     wordToRemove.cells.forEach( (cell:Cell)=>{
       if( cell.words.length > 1 ){
         cell.words.splice( cell.words.indexOf( wordToRemove ), 1 );
       } else {
+        letters += cell.letter;
         cell.words = [];
         cell.letter = '';
       }
       localBoard.rows[cell.xPos][cell.yPos] = cell;
     })
     localBoard.removedWord = wordToRemove;
-    let letters = '';
-    wordToRemove.cells.forEach( (cell: Cell) => {
-      if( cell.words.length < 2 ){
-        letters = `${letters}${cell.letter}`;
-      }
-    } )
     while( letters.length < 9 ){
       letters += CHARS.charAt( Math.floor( CHARS.length * Math.random( ) ) );
     }
@@ -290,6 +287,16 @@ export default function BoardBuilder(/*props*/){
     localBoard.placedWords.splice( localBoard.placedWords.indexOf( wordToRemove ), 1 );
 
   }
+
+  const shuffleLetters = ( () =>{
+    const localBoard = Object.assign( {}, gameBoard );
+    /*
+     String to Array https://stackoverflow.com/questions/4547609/how-can-i-get-a-character-array-from-a-string
+     Shuffle string of chars https://stackoverflow.com/questions/3943772/how-do-i-shuffle-the-characters-in-a-string-in-javascript
+     */
+    localBoard.lettersLeft = Array.from(localBoard.lettersLeft).sort( () => Math.random() -.5).join('');
+    setGameBoard( localBoard );
+  });
 
   const getUniqueCells = ( placedWord: PlacedWord ):Array<Cell> => {
     return placedWord.cells.filter( (cell:Cell) =>{
@@ -512,9 +519,21 @@ export default function BoardBuilder(/*props*/){
   const scoreIt = ()=>{
     const localBoard = Object.assign( {}, gameBoard );
     const wordScore =  scorePlacedLetters( yourChars, localBoard, baseWords, true ) ;
-    const newScore = yourScore + wordScore;
-    setYourScore( newScore );
-    setCumulativePoints( cumulativePoints + (yourScore - challengerScore) )
+    const delta = localBoard.yourScore - localBoard.challengerScore;
+
+    console.log( `score: ${wordScore} (delta: ${delta})`)
+    console.log( `(Initially: ${localBoard.challengerScore} to your ${localBoard.yourScore})`)
+    localBoard.yourScore += wordScore;
+    localBoard.gameScored = true;
+    setGameBoard( localBoard );
+
+    if( delta < 0 ){
+      alert( `You lost.\n${challengerName} laughs at you and says: ${challengerTaunt}`);
+    } else {
+      alert( `You won!\nAs ${challengerName} leaves the arena, they say: ${challengerTaunt}`);
+      setCumulativePoints( cumulativePoints + ( localBoard.yourScore -  localBoard.challengerScore) )
+    }
+    RandomTaunt( setChallengerTaunt );
 
   }
 
@@ -787,52 +806,54 @@ export default function BoardBuilder(/*props*/){
   //Let's handle the keyboard input
   const keyboardInput = (event: KeyboardEvent<HTMLDivElement>) => {
 
-    const tmpBoard = Object.assign( {}, gameBoard );
-    const outputCell : Cell = Object.assign( {}, curCell );
+    if( !gameBoard.gameScored ){
+      const tmpBoard = Object.assign( {}, gameBoard );
+      const outputCell : Cell = Object.assign( {}, curCell );
 
-    //Capture the backspace and simply cancel the current word
-    //Maybe improve this with delete previous character later
-    if( event.key.length === 1 && tmpBoard.lettersLeft.match( event.key ) && outputCell !== null && outputCell.focused ){
-      const crawler = enteringRight ? [0,1] : [1,0];
-      outputCell.letter = event.key;
-      tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( event.key, '' );
-      outputCell.mine = true;
-      tmpBoard.rows[outputCell.xPos][outputCell.yPos] = outputCell;
-      const tmpYourChars = [...yourChars];
-      tmpYourChars.push( outputCell );
+      //Capture the backspace and simply cancel the current word
+      //Maybe improve this with delete previous character later
+      if( event.key.length === 1 && tmpBoard.lettersLeft.match( event.key ) && outputCell !== null && outputCell.focused ){
+        const crawler = enteringRight ? [0,1] : [1,0];
+        outputCell.letter = event.key;
+        tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( event.key, '' );
+        outputCell.mine = true;
+        tmpBoard.rows[outputCell.xPos][outputCell.yPos] = outputCell;
+        const tmpYourChars = [...yourChars];
+        tmpYourChars.push( outputCell );
 
-      let nextDetermined = false;
-      let index = 1;
-      do{
-        const nextX = outputCell.xPos + ( index * crawler[0] );
-        const nextY = outputCell.yPos + ( index * crawler[1] );
-        if( nextX < tmpBoard.xMax && nextY < tmpBoard.yMax ){
+        let nextDetermined = false;
+        let index = 1;
+        do{
+          const nextX = outputCell.xPos + ( index * crawler[0] );
+          const nextY = outputCell.yPos + ( index * crawler[1] );
+          if( nextX < tmpBoard.xMax && nextY < tmpBoard.yMax ){
 
-          const nextCell = tmpBoard.rows[nextX][nextY];
-          if( nextCell.letter === '' ){
+            const nextCell = tmpBoard.rows[nextX][nextY];
+            if( nextCell.letter === '' ){
+              outputCell.focused = false;
+              nextCell.focused = true;
+              nextDetermined = true;
+              setCurCell( nextCell );
+            }
+            index ++;
+          } else {
             outputCell.focused = false;
-            nextCell.focused = true;
+            setCurCell( null );
             nextDetermined = true;
-            setCurCell( nextCell );
           }
-          index ++;
-        } else {
-          outputCell.focused = false;
-          setCurCell( null );
-          nextDetermined = true;
+        } while ( !nextDetermined );
+
+
+        setYourChars( tmpYourChars );
+        setGameBoard( tmpBoard );
+      } else if( yourChars.length > 0 ){
+        if( [ 13 ].indexOf( event.keyCode ) >= 0 ){
+          scoreIt( );
+        } else if ( [8,27].indexOf( event.keyCode ) >= 0 ){
+          cancelCurrentWord( );
         }
-      } while ( !nextDetermined );
 
-
-      setYourChars( tmpYourChars );
-      setGameBoard( tmpBoard );
-    } else if( yourChars.length > 0 ){
-      if( [ 13 ].indexOf( event.keyCode ) >= 0 ){
-        scoreIt( );
-      } else if ( [8,27].indexOf( event.keyCode ) >= 0 ){
-        cancelCurrentWord( );
       }
-
     }
   }
 
@@ -849,40 +870,37 @@ export default function BoardBuilder(/*props*/){
   }
 
   const selectCell = (event: MouseEvent):void => {
-    const target = event.target as HTMLButtonElement;
-    const xpos = parseInt( target.attributes.xpos.value );
-    const ypos = parseInt( target.attributes.ypos.value );
-    const tmpBoard = Object.assign( {}, gameBoard );
+    if( !gameBoard.gameScored ){
+      const target = event.target as HTMLButtonElement;
+      const xpos = parseInt( target.attributes.xpos.value );
+      const ypos = parseInt( target.attributes.ypos.value );
+      const tmpBoard = Object.assign( {}, gameBoard );
     
-    if( yourChars.length >= 1 ){
-      cancelCurrentWord( );
-    }
-    if( curCell !== null ){
-      const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
-      prevCell.focused = false;
-      tmpBoard.rows[curCell.xPos][curCell.yPos] = prevCell;
-    }
+      if( yourChars.length >= 1 ){
+        cancelCurrentWord( );
+      }
+      if( curCell !== null ){
+        const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
+        prevCell.focused = false;
+        tmpBoard.rows[curCell.xPos][curCell.yPos] = prevCell;
+      }
 
-    const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
-    if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
-      setEnteringRight( true );
-    } else {
-      setEnteringRight( !enteringRight );
-    }
-    /*
-    newCurCell.words.forEach( (placedWord:PlacedWord) =>{
-      console.log( placedWord.word, 'words', getAllWords( placedWord, gameBoard ) );
-    })
-    */
+      const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
+      if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
+        setEnteringRight( true );
+      } else {
+        setEnteringRight( !enteringRight );
+      }
     
-    if( newCurCell.letter === '' ){
-      newCurCell.focused = true;
-      setCurCell( newCurCell );
-    } else {
-      newCurCell.focused = true;
+      if( newCurCell.letter === '' ){
+        newCurCell.focused = true;
+        setCurCell( newCurCell );
+      } else {
+        newCurCell.focused = true;
+      }
+      setGameBoard( tmpBoard );
+
     }
-    setGameBoard( tmpBoard );
-    //setCurCell( newCurCell );
     
   }
 
@@ -980,7 +998,6 @@ export default function BoardBuilder(/*props*/){
       }
       return(
           <div className={styles.board}
-            //onKeyUp={keyboardInput }
             >
             {output}
           </div>
@@ -996,12 +1013,12 @@ export default function BoardBuilder(/*props*/){
       <button onClick={initBoard} >Bring the next challenger?</button><br/>
       {gameBoard.rows.length > 0 ? (
         <Fragment>
-        <button disabled={yourChars.length < 1} onClick={scoreIt} >Score it!</button>
+        <button disabled={ gameBoard.gameScored || yourChars.length < 1} onClick={scoreIt} >Score it!</button>
         <div>
-          {challengerName} : {challengerScore}<br/>
+          {challengerName} : { gameBoard.challengerScore}<br/>
         </div>
         <div>
-        You: {yourScore}&nbsp; Your letters: {gameBoard.lettersLeft} <br/>
+        You: { gameBoard.yourScore}&nbsp; <button onClick={shuffleLetters}>Shuffle</button> your letters: {gameBoard.lettersLeft} <br/>
         </div>
           
         </Fragment> ) : null }
