@@ -168,6 +168,7 @@ export default function BoardBuilder(/*props*/){
   // Thanks to https://stackoverflow.com/questions/73453969/keyup-event-listeners-not-using-the-updated-states-in-react
   useEffect( () =>{
     document.addEventListener( 'keyup', keyboardInput );
+    return () => document.removeEventListener( 'keyup', keyboardInput );
   }, [curCell]);
 
   useEffect( ()=>{
@@ -324,7 +325,6 @@ export default function BoardBuilder(/*props*/){
       const aCells = a.cells.filter( (cell:Cell) => { return cell.words.length < 2});
       const bCells = b.cells.filter( (cell:Cell) => { return cell.words.length < 2});
 
-      console.log( 'bset candidate' );
       return scorePlacedLetters( bCells, localBoard, validWords ) - scorePlacedLetters( aCells, localBoard, validWords );
 
     } )[0];
@@ -520,9 +520,9 @@ export default function BoardBuilder(/*props*/){
   // Convenience method
   const scoreIt = ()=>{
     const localBoard = Object.assign( {}, gameBoard );
-    console.log( 'scoreIt' );
     const wordScore =  scorePlacedLetters( yourChars, localBoard, baseWords, true ) ;
     const delta = localBoard.yourScore - localBoard.challengerScore;
+    const phraseBegin = `That earned you ${wordScore} points\n`;
 
     console.log( `score: ${wordScore} (delta: ${delta})`)
     console.log( `(Initially: ${localBoard.challengerScore} to your ${localBoard.yourScore})`)
@@ -531,9 +531,9 @@ export default function BoardBuilder(/*props*/){
     setGameBoard( localBoard );
 
     if( delta < 0 ){
-      alert( `You lost.\n${challengerName} laughs at you and says: ${challengerTaunt}`);
+      alert( phraseBegin + `You lost.\n${challengerName} laughs at you and says: ${challengerTaunt}`);
     } else {
-      alert( `You won!\nAs ${challengerName} leaves the arena, they say: ${challengerTaunt}`);
+      alert( phraseBegin + `You won!\nAs ${challengerName} leaves the arena, they say: ${challengerTaunt}`);
       setCumulativePoints( cumulativePoints + ( localBoard.yourScore -  localBoard.challengerScore) )
     }
     RandomTaunt( setChallengerTaunt );
@@ -581,7 +581,7 @@ export default function BoardBuilder(/*props*/){
       const frontY = firstWord.yPos + (crawler[1] * mainOffset)
       if( frontX < localGameBoard.xMax && frontY < localGameBoard.yMax ){
         cell =  localGameBoard.rows[frontX][frontY];
-        if( cell.mine && placedCells.indexOf( cell ) >= 0 ){
+        if( cell.mine || placedCells.indexOf( cell ) >= 0 ){
           let perpWord = cell.letter;
           let perpWordScore = 0;
           let perpWordModifiers = 1;
@@ -811,6 +811,8 @@ export default function BoardBuilder(/*props*/){
   const keyboardInput = (event_in: any) => {
     const event = event_in as KeyboardEvent;
 
+    console.log( event_in );
+    
     if( !gameBoard.gameScored ){
       const tmpBoard = Object.assign( {}, gameBoard );
       const outputCell : Cell = Object.assign( {}, curCell );
@@ -819,6 +821,7 @@ export default function BoardBuilder(/*props*/){
       //Maybe improve this with delete previous character later
       if( event.key.length === 1 && tmpBoard.lettersLeft.match( event.key ) && outputCell !== null && outputCell.focused ){
         const crawler = enteringRight ? [0,1] : [1,0];
+        console.log( 'happening', event.key );
         outputCell.letter = event.key;
         tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( event.key, '' );
         outputCell.mine = true;
