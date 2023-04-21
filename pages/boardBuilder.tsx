@@ -168,7 +168,6 @@ export default function BoardBuilder(/*props*/){
   // Thanks to https://stackoverflow.com/questions/73453969/keyup-event-listeners-not-using-the-updated-states-in-react
   useEffect( () =>{
     document.addEventListener( 'keyup', keyboardInput );
-    //document.onkeyup = (event)=>keyboardInput(event);
   }, [curCell]);
 
   useEffect( ()=>{
@@ -325,6 +324,7 @@ export default function BoardBuilder(/*props*/){
       const aCells = a.cells.filter( (cell:Cell) => { return cell.words.length < 2});
       const bCells = b.cells.filter( (cell:Cell) => { return cell.words.length < 2});
 
+      console.log( 'bset candidate' );
       return scorePlacedLetters( bCells, localBoard, validWords ) - scorePlacedLetters( aCells, localBoard, validWords );
 
     } )[0];
@@ -520,6 +520,7 @@ export default function BoardBuilder(/*props*/){
   // Convenience method
   const scoreIt = ()=>{
     const localBoard = Object.assign( {}, gameBoard );
+    console.log( 'scoreIt' );
     const wordScore =  scorePlacedLetters( yourChars, localBoard, baseWords, true ) ;
     const delta = localBoard.yourScore - localBoard.challengerScore;
 
@@ -674,6 +675,8 @@ export default function BoardBuilder(/*props*/){
     const valid = wordList.reduce( (result, word) => {
       return result && validWords.includes( word );
     }, true );
+
+    console.log( valid, wordList, notMine, score );
 
     return  valid && ( wordList.length > 0 ) &&( notMine >= 1 ) ? score : 0;
   }
@@ -849,9 +852,9 @@ export default function BoardBuilder(/*props*/){
         setYourChars( tmpYourChars );
         setGameBoard( tmpBoard );
       } else if( yourChars.length > 0 ){
-        if( [ 13 ].indexOf( event.keyCode ) >= 0 ){
+        if( [ 'Enter' ].indexOf( event.key ) >= 0 ){
           scoreIt( );
-        } else if ( [8,27].indexOf( event.keyCode ) >= 0 ){
+        } else if ( ['Backspace','Escape'].indexOf( event.key ) >= 0 ){
           cancelCurrentWord( );
         }
 
@@ -876,12 +879,11 @@ export default function BoardBuilder(/*props*/){
 
     if( event !== null && !gameBoard.gameScored ){
       const target = event.target as HTMLElement;
-      //console.log( event, target, target.attributes['data-xpos'].value  );
-      const xDat = target.attributes.getNamedItem( 'data-xpos' );
-      const yDat = target.attributes.getNamedItem( 'data-ypos' );
+      const xDat = target.attributes.getNamedItem( 'data-xpos' )?.value;
+      const yDat = target.attributes.getNamedItem( 'data-ypos' )?.value;
       if( xDat !== null && yDat !== null ){
-        const xpos = parseInt( xDat.value );
-        const ypos = parseInt( yDat.value );
+        const xpos = parseInt( xDat as string );
+        const ypos = parseInt( yDat as string );
         const tmpBoard = Object.assign( {}, gameBoard );
     
         if( yourChars.length >= 1 ){
