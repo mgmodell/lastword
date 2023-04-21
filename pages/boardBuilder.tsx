@@ -899,17 +899,19 @@ export default function BoardBuilder(/*props*/){
         }
 
         const newCurCell:Cell = tmpBoard.rows[xpos][ypos];
-        if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
-          setEnteringRight( true );
-        } else {
-          setEnteringRight( !enteringRight );
-        }
-    
         if( newCurCell.letter === '' ){
           newCurCell.focused = true;
           setCurCell( newCurCell );
+
+          if( newCurCell.xPos !== curCell?.xPos || newCurCell.yPos !== curCell.yPos ){
+            setEnteringRight( true );
+          } else {
+            setEnteringRight( !enteringRight );
+          }
+    
         } else {
-          newCurCell.focused = true;
+
+          //newCurCell.focused = true;
         }
         setGameBoard( tmpBoard );
       }
