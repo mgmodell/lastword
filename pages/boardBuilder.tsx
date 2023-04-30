@@ -676,7 +676,7 @@ export default function BoardBuilder(/*props*/){
       return result && validWords.includes( word );
     }, true );
 
-    console.log( valid, wordList, notMine, score );
+    //console.log( valid, wordList, notMine, score );
 
     return  valid && ( wordList.length > 0 ) &&( notMine >= 1 ) ? score : 0;
   }
@@ -1023,6 +1023,27 @@ export default function BoardBuilder(/*props*/){
     
   }, [gameBoard,enteringRight] );
 
+  const yourTiles = (letters:string) =>{
+    const tiles: Array<JSX.Element>= [];
+    let index = 0;
+    Array.from( letters ).forEach( (letter) =>{
+      tiles.push(
+        <div key={`t-${index}`}
+          className={ styles.tile}>
+            <span>{letter}</span>
+            <sub>{pointsForLetter[letter]['points']}</sub>
+          </div>
+      )
+      index++;
+    })
+    return(
+      <div className={styles.tray} >
+        {tiles}
+      </div>
+    )
+
+  }
+
   return(
     <Fragment>
       <div className={styles.status}>Thus far you have {cumulativePoints} points.</div>
@@ -1034,7 +1055,7 @@ export default function BoardBuilder(/*props*/){
           {challengerName} : { gameBoard.challengerScore}<br/>
         </div>
         <div>
-        You: { gameBoard.yourScore}&nbsp; <button onClick={shuffleLetters}>Shuffle</button> your letters: {gameBoard.lettersLeft} <br/>
+        You: { gameBoard.yourScore}&nbsp; <button onClick={shuffleLetters}>Shuffle</button> {yourTiles( gameBoard.lettersLeft )} <br/>
         </div>
           
         </Fragment> ) : null }

@@ -20,6 +20,35 @@
   content: '"';
 }
 
+.tray {
+  display: grid;
+  grid-template-columns: repeat( 10, 1fr);
+  width: 50%;
+}
+
+.tray::before{
+  content: 'Your  letters:'
+}
+.tile {
+  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  vertical-align: middle;
+  text-align: center;
+  margin: 3px;
+  border-width: thin;
+
+  background-color:burlywood;
+  border-color: #50ce6f;
+  
+  position: relative;
+  display: inline-block;
+
+}
+.tile > sub {
+  font-size:xx-small;
+}
+
 .board > div {
   border-radius: 10px;
   width: 30px;
