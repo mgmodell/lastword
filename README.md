@@ -1,7 +1,7 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/y/mgmodell/lastword?style=flat-square)
 ![GitHub language count](https://img.shields.io/github/languages/count/mgmodell/lastword)
 
-My sister's birthday is coming up and she is turning old. This is a word game I'm building for my sister.
+My sister's birthday is coming up and she is turning old. She likes word games and so I'm making one for her.
 
 ## Getting Started
 
