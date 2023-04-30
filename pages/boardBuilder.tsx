@@ -128,6 +128,7 @@ export default function BoardBuilder(/*props*/){
     setGameBoard( newBoard );
     if( baseWords.length > 0 ){
       const builtBoard = buildBoard( GRID_X, GRID_Y, baseWords.filter( (word:string) => word.length < 10 ) );
+      shuffleLetters( );
       console.log( builtBoard.lettersLeft );
       setGameBoard( builtBoard );
 
@@ -253,13 +254,16 @@ export default function BoardBuilder(/*props*/){
   const removeAWord = ( tmpBoard: Board ):number =>{
     const localBoard = Object.assign( {}, tmpBoard );
     const wordToRemove = bestCandidate( localBoard, baseWords );
-    const removedWordScore = scoreWords( wordToRemove, localBoard );
-    const baseScore = 99 + Math.floor( Math.random( ) * 400 );
+    //const removedWordScore = scoreWords( wordToRemove, localBoard );
+    const removedWordScore = scorePlacedLetters( wordToRemove.cells, localBoard, baseWords );
+    console.log( removedWordScore );
+    //const baseScore = 99 + Math.floor( Math.random( ) * 400 );
     //setYourScore( baseScore );
     //setChallengerScore( baseScore + removedWordScore - 1 );
 
     removeWordFromBoard( wordToRemove, localBoard );
-    tmpBoard.lettersLeft = localBoard.lettersLeft;
+    tmpBoard.lettersLeft = Array.from(localBoard.lettersLeft).sort( () => Math.random() -.5).join('');
+    //tmpBoard.lettersLeft = localBoard.lettersLeft;
     tmpBoard.letterSet = localBoard.letterSet;
     //setGameBoard( localBoard );
     return removedWordScore;
@@ -521,14 +525,16 @@ export default function BoardBuilder(/*props*/){
   const scoreIt = ()=>{
     const localBoard = Object.assign( {}, gameBoard );
     const wordScore =  scorePlacedLetters( yourChars, localBoard, baseWords, true ) ;
-    const delta = localBoard.yourScore - localBoard.challengerScore;
     const phraseBegin = `That earned you ${wordScore} points\n`;
+
+    localBoard.yourScore += wordScore;
+    localBoard.gameScored = true;
+
+    const delta = localBoard.yourScore - localBoard.challengerScore;
+    setGameBoard( localBoard );
 
     console.log( `score: ${wordScore} (delta: ${delta})`)
     console.log( `(Initially: ${localBoard.challengerScore} to your ${localBoard.yourScore})`)
-    localBoard.yourScore += wordScore;
-    localBoard.gameScored = true;
-    setGameBoard( localBoard );
 
     if( delta < 0 ){
       alert( phraseBegin + `You lost.\n${challengerName} laughs at you and says: ${challengerTaunt}`);
@@ -811,7 +817,7 @@ export default function BoardBuilder(/*props*/){
   const keyboardInput = (event_in: any) => {
     const event = event_in as KeyboardEvent;
 
-    console.log( event_in );
+    //console.log( event_in );
     
     if( !gameBoard.gameScored ){
       const tmpBoard = Object.assign( {}, gameBoard );
@@ -821,7 +827,6 @@ export default function BoardBuilder(/*props*/){
       //Maybe improve this with delete previous character later
       if( event.key.length === 1 && tmpBoard.lettersLeft.match( event.key ) && outputCell !== null && outputCell.focused ){
         const crawler = enteringRight ? [0,1] : [1,0];
-        console.log( 'happening', event.key );
         outputCell.letter = event.key;
         tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( event.key, '' );
         outputCell.mine = true;
@@ -1023,7 +1028,8 @@ export default function BoardBuilder(/*props*/){
     
   }, [gameBoard,enteringRight] );
 
-  const yourTiles = (letters:string) =>{
+  const yourTiles = () =>{
+    const letters = gameBoard.lettersLeft;
     const tiles: Array<JSX.Element>= [];
     let index = 0;
     Array.from( letters ).forEach( (letter) =>{
@@ -1055,7 +1061,7 @@ export default function BoardBuilder(/*props*/){
           {challengerName} : { gameBoard.challengerScore}<br/>
         </div>
         <div>
-        You: { gameBoard.yourScore}&nbsp; <button onClick={shuffleLetters}>Shuffle</button> {yourTiles( gameBoard.lettersLeft )} <br/>
+        You: { gameBoard.yourScore}&nbsp;  {yourTiles(  )} <br/><button onClick={shuffleLetters}>Shuffle</button>
         </div>
           
         </Fragment> ) : null }
