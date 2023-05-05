@@ -13,7 +13,7 @@ export default function Home() {
       <ol>
         <li>Click <i>bring the next challenger</i> to reveal the game board.</li>
         <li>Review the board and your tiles and play the best word to close the gap in scores and beat the challenger.</li>
-        <li>When you're ready:
+        <li>When you&lsquo;re ready:
           <ol type="i">
             <li>Click the place where the word should begin.</li>
             <li>Notice the arrow pointing the direction of word placement. If you wish to change directions, click again.</li>
