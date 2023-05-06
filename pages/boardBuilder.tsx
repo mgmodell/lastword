@@ -682,7 +682,6 @@ export default function BoardBuilder(/*props*/){
       return result && validWords.includes( word );
     }, true );
 
-    //console.log( valid, wordList, notMine, score );
 
     return  valid && ( wordList.length > 0 ) &&( notMine >= 1 ) ? score : 0;
   }
@@ -821,6 +820,8 @@ export default function BoardBuilder(/*props*/){
           scoreIt( );
         } else if ( ['Backspace','Escape'].indexOf( event.code ) >= 0 ){
           cancelCurrentWord( );
+        } else{
+          playLetter( event.key );
         }
 
     } else {
@@ -899,9 +900,6 @@ export default function BoardBuilder(/*props*/){
         const ypos = parseInt( yDat as string );
         const tmpBoard = Object.assign( {}, gameBoard );
     
-        if( yourChars.length >= 1 ){
-          cancelCurrentWord( );
-        }
         if( curCell !== null ){
           const prevCell = Object.assign( {}, tmpBoard.rows[curCell.xPos][curCell.yPos] );
           prevCell.focused = false;
@@ -919,11 +917,11 @@ export default function BoardBuilder(/*props*/){
             setEnteringRight( !enteringRight );
           }
     
-        } else {
-
-          //newCurCell.focused = true;
         }
         setGameBoard( tmpBoard );
+        if( yourChars.length >= 1 ){
+          cancelCurrentWord( );
+        }
       }
 
     }
