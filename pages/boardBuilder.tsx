@@ -1071,7 +1071,7 @@ export default function BoardBuilder(/*props*/){
           {challengerName} : { gameBoard.challengerScore}<br/>
         </div>
         <div>
-        You: { gameBoard.yourScore}&nbsp;  {yourTiles(  )} <br/><button onClick={shuffleLetters}>Shuffle</button>
+        You: { gameBoard.yourScore}&nbsp;(down by {gameBoard.challengerScore -gameBoard.yourScore})  {yourTiles(  )} <br/><button onClick={shuffleLetters}>Shuffle</button>
         </div>
           
         </Fragment> ) : null }
