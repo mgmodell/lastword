@@ -816,19 +816,31 @@ export default function BoardBuilder(/*props*/){
   //Let's handle the keyboard input
   const keyboardInput = (event_in: any) => {
     const event = event_in as KeyboardEvent;
+    if( yourChars.length > 0 ){
+        if( [ 'Enter' ].indexOf( event.code ) >= 0 ){
+          scoreIt( );
+        } else if ( ['Backspace','Escape'].indexOf( event.code ) >= 0 ){
+          cancelCurrentWord( );
+        }
 
-    //console.log( event_in );
+    } else {
+      playLetter( event.key );
+    }
+
+  }
     
+  const playLetter = (letter:string) =>{
+
     if( !gameBoard.gameScored ){
       const tmpBoard = Object.assign( {}, gameBoard );
       const outputCell : Cell = Object.assign( {}, curCell );
 
       //Capture the backspace and simply cancel the current word
       //Maybe improve this with delete previous character later
-      if( event.key.length === 1 && tmpBoard.lettersLeft.match( event.key ) && outputCell !== null && outputCell.focused ){
+      if( letter.length === 1 && tmpBoard.lettersLeft.match( letter ) && outputCell !== null && outputCell.focused ){
         const crawler = enteringRight ? [0,1] : [1,0];
-        outputCell.letter = event.key;
-        tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( event.key, '' );
+        outputCell.letter = letter;
+        tmpBoard.lettersLeft = tmpBoard.lettersLeft.replace( letter, '' );
         outputCell.mine = true;
         tmpBoard.rows[outputCell.xPos][outputCell.yPos] = outputCell;
         const tmpYourChars = [...yourChars];
@@ -859,13 +871,6 @@ export default function BoardBuilder(/*props*/){
 
         setYourChars( tmpYourChars );
         setGameBoard( tmpBoard );
-      } else if( yourChars.length > 0 ){
-        if( [ 'Enter' ].indexOf( event.key ) >= 0 ){
-          scoreIt( );
-        } else if ( ['Backspace','Escape'].indexOf( event.key ) >= 0 ){
-          cancelCurrentWord( );
-        }
-
       }
     }
   }
@@ -1035,9 +1040,14 @@ export default function BoardBuilder(/*props*/){
     Array.from( letters ).forEach( (letter) =>{
       tiles.push(
         <div key={`t-${index}`}
+          onClick={(event)=>playLetter(letter)}
           className={ styles.tile}>
-            <span>{letter}</span>
-            <sub>{pointsForLetter[letter]['points']}</sub>
+            <span
+              onClick={(event)=>playLetter(letter)}
+            >{letter}</span>
+            <sub
+              onClick={(event)=>playLetter(letter)}
+            >{pointsForLetter[letter]['points']}</sub>
           </div>
       )
       index++;
