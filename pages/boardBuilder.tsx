@@ -10,61 +10,11 @@ import axios from "axios";
 import styles from '../styles/Home.module.css';
 import { RandomName, RandomTaunt } from './api/RandomGenerators';
 
+import { Orientation, Enhancement, Cell, PlacedWord, Board, PointMap } from './api/lastWordTypes';
+
 const CHARS = 'abcdefghijklmnopqrstuvwxwz';
-enum Orientation {
-  HORIZONTAL=1,
-  VERTICAL=2
-};
-enum Enhancement {
-  NA = 'NA',
-  L2 = 'Double Letter Score',
-  L3 = 'Triple Letter Score',
-  W2 = 'Double Word Score',
-  W3 = 'Triple Word Score'
-};
-type Cell = {
-  xPos: number;
-  yPos: number;
-  mine: boolean;
-  focused: boolean;
-  scored: boolean;
-  enhancement: Enhancement;
-  letter: string;
-  words: Array<PlacedWord>;
-};
-type PlacedWord = {
-  x: number;
-  y: number;
-  orientation: Orientation;
-  word: string;
-  place: number;
-  cells: Array<Cell>;
-};
-
-type Board = {
-  xMax: number;
-  yMax: number;
-  rows: Array<Array<Cell>>;
-  placedWords: Array<PlacedWord>,
-  usedCells: Array<Cell>,
-  removedWord: PlacedWord | null,
-  letterSet: string,
-  lettersLeft: string,
-
-  challengerScore: number,
-  yourScore: number,
-  gameScored: boolean,
-}
-
-type PointMap = {
-  [key: string] : {
-    points: number,
-    tiles: number
-  }
-}
 
 export default function BoardBuilder(/*props*/){
-
 
 
   const GRID_SIZE = 17;
