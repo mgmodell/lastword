@@ -8,6 +8,9 @@
     "start": "next start -p 3030",
     "lint": "next lint"
   },
+  "engines": {
+    "node": "22.17.1"
+  },
   "dependencies": {
     "@fontsource/public-sans": "^4.5.12",
     "@types/node": "^20.1.0",
