@@ -983,7 +983,7 @@ export default function BoardBuilder(/*props*/){
 
   const yourTiles = () =>{
     const letters = gameBoard.lettersLeft;
-    const tiles: Array<JSX.Element>= [];
+    const tiles: Array<React.JSX.Element>= [];
     let index = 0;
     Array.from( letters ).forEach( (letter) =>{
       tiles.push(
